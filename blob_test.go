@@ -62,3 +62,12 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	_, err = store.Get(id)
 	assert.Error(t, err, "Get should return an error if the content does not match its ID")
 }
+
+func TestGetNonExistentBlobReturnsError(t *testing.T) {
+	dir := t.TempDir()
+
+	store := NewFsBlobStore(dir)
+
+	_, err := store.Get("nonexistent")
+	assert.Error(t, err, "Get should return an error for a non-existent blob")
+}
