@@ -1,7 +1,6 @@
 package fit
 
 import (
-	"os"
 	"testing"
 
 	"path/filepath"
@@ -58,8 +57,7 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	path := filepath.Join(dir, "blobs", string(id))
 
 	// write different content to the file
-	err = os.WriteFile(path, []byte("world"), 0644)
-	require.NoError(t, err)
+	WriteFile(path, "world")
 
 	_, err = store.Get(id)
 	assert.Error(t, err, "Get should return an error if the content does not match its ID")
