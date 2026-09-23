@@ -24,9 +24,10 @@ func TestAddEmptyPath(t *testing.T) {
 func TestUpdateFileBlobStaysSame(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
 
-	err := Add(dir, "test.txt")
+	err = Add(dir, "test.txt")
 	require.NoError(t, err)
 
 	// update the file content
@@ -42,9 +43,10 @@ func TestUpdateFileBlobStaysSame(t *testing.T) {
 func TestAddSameFileTwice(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
 
-	err := Add(dir, "test.txt")
+	err = Add(dir, "test.txt")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
@@ -59,12 +61,14 @@ func TestAddSameFileTwice(t *testing.T) {
 func TestAddFile(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteFile(dir, "test.txt", "Hello, World!")
-
-	err := Add(dir, "test.txt")
+	_, err := WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
-	WriteFile(dir, "test.txt", "Goodbye, World!")
+	err = Add(dir, "test.txt")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "test.txt", "Goodbye, World!")
+	require.NoError(t, err)
 
 	staged, err := StagedBlob(dir, "test.txt")
 	require.NoError(t, err)
@@ -75,9 +79,10 @@ func TestAddFile(t *testing.T) {
 func TestAddDeepFile(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteFile(dir, "subdir", "test.txt", "Hello, World!")
+	_, err := WriteFile(dir, "subdir", "test.txt", "Hello, World!")
+	require.NoError(t, err)
 
-	err := Add(dir, "subdir/test.txt")
+	err = Add(dir, "subdir/test.txt")
 	require.NoError(t, err)
 
 	staged, err := StagedBlob(dir, "subdir/test.txt")
@@ -89,9 +94,10 @@ func TestAddDeepFile(t *testing.T) {
 func TestAddVeryDeepFile(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteFile(dir, "subdir", "subdir2", "subdir3", "test.txt", "Hello, World!")
+	_, err := WriteFile(dir, "subdir", "subdir2", "subdir3", "test.txt", "Hello, World!")
+	require.NoError(t, err)
 
-	err := Add(dir, "subdir/subdir2/subdir3/test.txt")
+	err = Add(dir, "subdir/subdir2/subdir3/test.txt")
 	require.NoError(t, err)
 
 	staged, err := StagedBlob(dir, "subdir/subdir2/subdir3/test.txt")
@@ -103,11 +109,12 @@ func TestAddVeryDeepFile(t *testing.T) {
 func TestAddFileRelativeToRepoRoot(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
 
 	subdir := filepath.Join(dir, "subdir")
 
-	err := Add(subdir, "../test.txt")
+	err = Add(subdir, "../test.txt")
 	require.NoError(t, err)
 
 	staged, err := StagedBlob(subdir, "../test.txt")
@@ -119,10 +126,13 @@ func TestAddFileRelativeToRepoRoot(t *testing.T) {
 func TestAddDir(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteFile(dir, "subdir", "test1.txt", "Hello, World!")
-	WriteFile(dir, "subdir", "test2.txt", "Goodbye, World!")
+	_, err := WriteFile(dir, "subdir", "test1.txt", "Hello, World!")
+	require.NoError(t, err)
 
-	err := Add(dir, "subdir")
+	_, err = WriteFile(dir, "subdir", "test2.txt", "Goodbye, World!")
+	require.NoError(t, err)
+
+	err = Add(dir, "subdir")
 	require.NoError(t, err)
 
 	staged1, err := StagedBlob(dir, "subdir/test1.txt")
@@ -132,19 +142,4 @@ func TestAddDir(t *testing.T) {
 	staged2, err := StagedBlob(dir, "subdir/test2.txt")
 	require.NoError(t, err)
 	require.Equal(t, "Goodbye, World!", string(staged2))
-}
-
-func TestAddTwiceDoesNotDuplicate(t *testing.T) {
-	dir := t.TempDir()
-
-	WriteFile(dir, "test.txt", "Hello, World!")
-
-	err := Add(dir, "test.txt")
-	require.NoError(t, err)
-
-	err = Add(dir, "test.txt")
-	require.NoError(t, err)
-
-	index := LoadIndex(dir)
-	require.Len(t, index.Entries, 1)
 }

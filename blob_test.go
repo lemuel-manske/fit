@@ -53,7 +53,8 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	require.NoError(t, err)
 
 	// write different content to the file
-	WriteFile(dir, "blobs", string(id), "world")
+	_, err = WriteFile(dir, "blobs", string(id), "world")
+	require.NoError(t, err)
 
 	_, err = store.Get(id)
 	assert.Error(t, err, "Get should return an error if the content does not match its ID")
@@ -68,7 +69,8 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	require.NoError(t, err)
 
 	// write different content to the file
-	WriteFile(dir, "blobs", string(id), "world")
+	_, err = WriteFile(dir, "blobs", string(id), "world")
+	require.NoError(t, err)
 
 	// put the same blob again
 	id2, err := store.Put([]byte("hello"))
