@@ -18,6 +18,25 @@ func TestBlobIDIsSHA256OfContent(t *testing.T) {
 	assert.Equal(t, want, string(got), "BlobID should be the SHA256 hash of the content")
 }
 
+func TestBlobIDIsDeterministic(t *testing.T) {
+	content := []byte("hello")
+
+	blobID1 := BlobID(content)
+	blobID2 := BlobID(content)
+
+	assert.Equal(t, blobID1, blobID2, "BlobID should be deterministic for the same content")
+}
+
+func TestDifferentASCIICaseProducesDifferentBlobIDs(t *testing.T) {
+	content1 := []byte("a")
+	content2 := []byte("A")
+
+	blobID1 := BlobID(content1)
+	blobID2 := BlobID(content2)
+
+	assert.NotEqual(t, blobID1, blobID2, "Different ASCII case should produce different BlobIDs")
+}
+
 func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 	content1 := []byte("hello")
 	content2 := []byte("world")
