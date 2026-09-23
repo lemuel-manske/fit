@@ -3,8 +3,6 @@ package fit
 import (
 	"testing"
 
-	"path/filepath"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,13 +52,35 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
 
-	path := filepath.Join(dir, "blobs", string(id))
-
 	// write different content to the file
-	WriteFile(path, "world")
+	WriteFile(dir, "blobs", string(id), "world")
 
 	_, err = store.Get(id)
 	assert.Error(t, err, "Get should return an error if the content does not match its ID")
+}
+
+func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
+	dir := t.TempDir()
+
+	store := NewFsBlobStore(dir)
+
+	id, err := store.Put([]byte("hello"))
+	require.NoError(t, err)
+
+	// write different content to the file
+	WriteFile(dir, "blobs", string(id), "world")
+
+	// put the same blob again
+	id2, err := store.Put([]byte("hello"))
+	require.NoError(t, err)
+
+	assert.Equal(t, id, id2, "Put should return the same ID for the same content")
+
+	// get the blob and check that it is still "hello"
+	content, err := store.Get(id)
+	require.NoError(t, err)
+
+	assert.Equal(t, []byte("hello"), content, "Get should return the original content")
 }
 
 func TestGetNonExistentBlobReturnsError(t *testing.T) {

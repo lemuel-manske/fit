@@ -3,45 +3,32 @@ package fit
 import (
 	"os"
 
-	"encoding/json"
 	"path/filepath"
 )
 
-func LoadIndex(dir string) *Index {
-	indexPath := filepath.Join(dir, "index.json")
-	index := &Index{}
+// WriteFile creates a new file with the given content.
+// The last element of the elements slice is the content,
+// the second to last is the filename, and the rest are directories.
+// If the directories do not exist, they will be created.
+// If the file already exists, it will be overwritten.
+func WriteFile(elements... string) string {
+	content := elements[len(elements)-1]
+	filename := elements[len(elements)-2]
 
-	data, err := os.ReadFile(indexPath)
-	if err != nil {
-		// if the file doesn't exist, return an empty index
-		if os.IsNotExist(err) {
-			index.Entries = make(map[string]IndexEntry)
-			return index
-		}
+	dir := filepath.Join(elements[:len(elements)-2]...)
+	path := filepath.Join(dir, filename)
 
-		panic(err)
-	}
-
-	err = json.Unmarshal(data, index)
+	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		panic(err)
 	}
 
-	return index
-}
-
-func WriteIndex(dir string, index *Index) {
-	indexPath := filepath.Join(dir, "index.json")
-
-	data, err := json.Marshal(index)
+	err = os.WriteFile(path, []byte(content), 0644)
 	if err != nil {
 		panic(err)
 	}
 
-	err = os.WriteFile(indexPath, data, 0644)
-	if err != nil {
-		panic(err)
-	}
+	return path
 }
 
 func ReadFile(dir, file string) ([]byte, error) {
@@ -53,4 +40,31 @@ func ReadFile(dir, file string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func ListFiles(dir, path string) ([]string, error) {
+	fullPath := filepath.Join(dir, path)
+
+	entries, err := os.ReadDir(fullPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []string
+	for _, entry := range entries {
+		files = append(files, filepath.Join(path, entry.Name()))
+	}
+
+	return files, nil
+}
+
+func IsDir(dir, path string) bool {
+	fullPath := filepath.Join(dir, path)
+
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return false
+	}
+
+	return info.IsDir()
 }
