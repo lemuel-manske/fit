@@ -84,3 +84,31 @@ func (s *FsCommitStore) Get(id CommitID) (Commit, error) {
 
 	return commit, nil
 }
+
+func CommitChanges(fitDir string, message string) (CommitID, error) {
+	store := NewFsCommitStore(fitDir)
+
+	index := LoadIndex(fitDir)
+
+	entries := MapValues(index.Entries, func(e IndexEntry) Hash {
+		return Hash(e.Blob)
+	})
+
+	commit := Commit{
+		Message: message,
+		Files:   entries,
+	}
+
+	commitID, err := store.Put(commit)
+	if err != nil {
+		return "", err
+	}
+
+	WriteHEAD(fitDir, commitID)
+
+	clear(index.Entries)
+
+	WriteIndex(fitDir, index)
+
+	return commitID, nil
+}

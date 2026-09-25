@@ -317,3 +317,134 @@ func TestGetNonExistentCommit(t *testing.T) {
 
 	assert.Error(t, err, "Expected error when getting non-existent commit")
 }
+
+func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "a.txt", "Hola")
+	require.NoError(t, err)
+
+	_, err = CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	content, err := ReadFile(dir, "a.txt")
+	require.NoError(t, err)
+
+	require.Equal(t, "Hola", string(content))
+}
+
+func TestFirstCommitMovesHEAD(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	id1, err := CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	headID, err := ReadHEAD(dir)
+	require.NoError(t, err)
+
+	assert.Equal(t, id1, headID)
+}
+
+func TestSecondCommitMovesHEAD(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	id1, err := CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "b.txt", "World")
+	require.NoError(t, err)
+
+	err = Add(dir, "b.txt")
+	require.NoError(t, err)
+
+	id2, err := CommitChanges(dir, "second commit")
+	require.NoError(t, err)
+
+	headID, err := ReadHEAD(dir)
+	require.NoError(t, err)
+
+	assert.Equal(t, id2, headID)
+	assert.NotEqual(t, id1, headID)
+}
+
+func TestFirstCommitContainsStagedFiles(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	id, err := CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	store := NewFsCommitStore(dir)
+
+	commit, err := store.Get(id)
+	require.NoError(t, err)
+
+	hash := NewBlobID([]byte("Hello"))
+
+	require.Equal(t, hash, commit.Files["a.txt"])
+}
+
+func TestCommitClearsIndex(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	_, err = CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	index := LoadIndex(dir)
+
+	require.Equal(t, 0, len(index.Entries), "Expected index to be cleared after commit")
+}
+
+func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "a.txt", "Hola")
+	require.NoError(t, err)
+
+	id, err := CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	store := NewFsCommitStore(dir)
+
+	commit, err := store.Get(id)
+	require.NoError(t, err)
+
+	hash := NewBlobID([]byte("Hello"))
+
+	require.Equal(t, hash, commit.Files["a.txt"])
+}
