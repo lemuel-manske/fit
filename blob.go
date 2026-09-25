@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 )
 
-const blobDir = "blobs"
-
 const (
+	blobDir = "blobs"
+
 	ErrCorruptedBlob = "corrupted blob: content does not match its ID"
 )
 
@@ -34,7 +34,7 @@ func (s *FsBlobStore) Put(data []byte) (Hash, error) {
 		return "", err
 	}
 
-	id := BlobID(data)
+	id := NewBlobID(data)
 	path := filepath.Join(dir, string(id))
 
 	// write the data to the file
@@ -57,8 +57,8 @@ func (s *FsBlobStore) Get(id Hash) ([]byte, error) {
 	}
 
 	// verify that the data matches the expected hash
-	if BlobID(data) != id {
-		err := fmt.Errorf("%s: expected %s, got %s", ErrCorruptedBlob, id, BlobID(data))
+	if NewBlobID(data) != id {
+		err := fmt.Errorf("%s: expected %s, got %s", ErrCorruptedBlob, id, NewBlobID(data))
 
 		return nil, err
 	}

@@ -40,11 +40,13 @@ type Index struct {
 
 func (i *Index) UnmarshalJSON(data []byte) error {
 	type Alias Index
+
 	aux := &struct {
 		*Alias
 	}{
 		Alias: (*Alias)(i),
 	}
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
@@ -63,11 +65,13 @@ type IndexEntry struct {
 
 func (i *IndexEntry) UnmarshalJSON(data []byte) error {
 	type Alias IndexEntry
+
 	aux := &struct {
 		*Alias
 	}{
 		Alias: (*Alias)(i),
 	}
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
@@ -75,8 +79,16 @@ func (i *IndexEntry) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func BlobID(data []byte) Hash {
+func NewBlobID(data []byte) Hash {
 	sum := sha256.Sum256(data)
 	encoded := hex.EncodeToString(sum[:])
 	return Hash(encoded)
+}
+
+func NewCommitID(commit Commit) CommitID {
+	commit.ID = "" // exclude ID from the hash calculation
+	data, _ := json.Marshal(commit)
+	sum := sha256.Sum256(data)
+	encoded := hex.EncodeToString(sum[:])
+	return CommitID(encoded)
 }

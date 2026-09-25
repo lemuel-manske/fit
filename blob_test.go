@@ -8,7 +8,7 @@ import (
 )
 
 func TestBlobIDIsSHA256OfContent(t *testing.T) {
-	got := BlobID([]byte("hello"))
+	got := NewBlobID([]byte("hello"))
 
 	want := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
 
@@ -18,8 +18,8 @@ func TestBlobIDIsSHA256OfContent(t *testing.T) {
 func TestBlobIDIsDeterministic(t *testing.T) {
 	content := []byte("hello")
 
-	blobID1 := BlobID(content)
-	blobID2 := BlobID(content)
+	blobID1 := NewBlobID(content)
+	blobID2 := NewBlobID(content)
 
 	assert.Equal(t, blobID1, blobID2, "BlobID should be deterministic for the same content")
 }
@@ -28,8 +28,8 @@ func TestDifferentASCIICaseProducesDifferentBlobIDs(t *testing.T) {
 	content1 := []byte("a")
 	content2 := []byte("A")
 
-	blobID1 := BlobID(content1)
-	blobID2 := BlobID(content2)
+	blobID1 := NewBlobID(content1)
+	blobID2 := NewBlobID(content2)
 
 	assert.NotEqual(t, blobID1, blobID2, "Different ASCII case should produce different BlobIDs")
 }
@@ -38,8 +38,8 @@ func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 	content1 := []byte("hello")
 	content2 := []byte("world")
 
-	blobID1 := BlobID(content1)
-	blobID2 := BlobID(content2)
+	blobID1 := NewBlobID(content1)
+	blobID2 := NewBlobID(content2)
 
 	assert.NotEqual(t, blobID1, blobID2, "Different content should produce different BlobIDs")
 }
