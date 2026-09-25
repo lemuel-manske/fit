@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"crypto/sha256"
+	"encoding/hex"
 	"path/filepath"
 )
 
@@ -12,6 +14,12 @@ const (
 
 	ErrCorruptedBlob = "corrupted blob: content does not match its ID"
 )
+
+func NewBlobID(data []byte) Hash {
+	sum := sha256.Sum256(data)
+	encoded := hex.EncodeToString(sum[:])
+	return Hash(encoded)
+}
 
 type BlobStore interface {
 	Put(data []byte) (Hash, error)

@@ -6,23 +6,23 @@ import (
 
 // Add adds a file or directory to the index.
 // If the path is a directory, it recursively adds all files in that directory.
-func Add(dir string, path string) error {
-	index := LoadIndex(dir)
+func Add(fitDir string, path string) error {
+	index := LoadIndex(fitDir)
 
-	store := NewFsBlobStore(dir)
+	store := NewFsBlobStore(fitDir)
 
 	if path == "" {
 		return fmt.Errorf("path cannot be empty")
 	}
 
-	if IsDir(dir, path) {
-		files, err := ListFiles(dir, path)
+	if IsDir(fitDir, path) {
+		files, err := ListFiles(fitDir, path)
 		if err != nil {
 			return err
 		}
 
 		for _, file := range files {
-			err := Add(dir, file)
+			err := Add(fitDir, file)
 			if err != nil {
 				return err
 			}
@@ -31,7 +31,7 @@ func Add(dir string, path string) error {
 		return nil
 	}
 
-	fileContent, err := ReadFile(dir, path)
+	fileContent, err := ReadFile(fitDir, path)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func Add(dir string, path string) error {
 		Blob: string(blobID),
 	}
 
-	WriteIndex(dir, index)
+	WriteIndex(fitDir, index)
 
 	return nil
 }

@@ -8,21 +8,21 @@ import (
 // If the path is a directory, it recursively removes all files in that directory.
 // If the file is staged, it will be removed from the index.
 // If the file is not staged, it will be removed from the working directory.
-func Rm(dir string, path string) error {
-	index := LoadIndex(dir)
+func Rm(fitDir string, path string) error {
+	index := LoadIndex(fitDir)
 
 	if path == "" {
 		return fmt.Errorf("path cannot be empty")
 	}
 
-	if IsDir(dir, path) {
-		files, err := ListFiles(dir, path)
+	if IsDir(fitDir, path) {
+		files, err := ListFiles(fitDir, path)
 		if err != nil {
 			return err
 		}
 
 		for _, file := range files {
-			err := Rm(dir, file)
+			err := Rm(fitDir, file)
 			if err != nil {
 				return err
 			}
@@ -34,9 +34,9 @@ func Rm(dir string, path string) error {
 	_, exists := index.Entries[path]
 	if exists {
 		delete(index.Entries, path)
-		WriteIndex(dir, index)
+		WriteIndex(fitDir, index)
 	} else {
-		err := RemoveFile(dir, path)
+		err := RemoveFile(fitDir, path)
 		if err != nil {
 			return err
 		}

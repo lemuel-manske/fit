@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSameCommitProducesSameID(t *testing.T) {
@@ -211,4 +212,108 @@ func TestChangingFileBlobChangesCommitID(t *testing.T) {
 	}
 
 	assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
+}
+
+func TestPutAndGetCommit(t *testing.T) {
+	dir := t.TempDir()
+
+	commit := Commit{
+		Message: "first commit",
+		Files: map[string]Hash{
+			"a.txt": "abc123",
+		},
+	}
+
+	store := NewFsCommitStore(dir)
+
+	id, err := store.Put(commit)
+	require.NoError(t, err)
+
+	got, err := store.Get(id)
+	require.NoError(t, err)
+
+	assert.Equal(t, commit.Message, got.Message)
+	assert.Equal(t, commit.Files, got.Files)
+}
+
+func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
+	dir := t.TempDir()
+
+	commit := Commit{
+		Message: "first commit",
+		Files: map[string]Hash{
+			"a.txt": "abc123",
+		},
+	}
+
+	store := NewFsCommitStore(dir)
+
+	id, err := store.Put(commit)
+	require.NoError(t, err)
+
+	// Corrupt the commit file
+	WriteFile(
+		dir, "commits", string(id), "{\"message\":\"corrupted commit\"}",
+	)
+
+	_, err = store.Get(id)
+
+	assert.Error(t, err, "Expected error when getting corrupted commit")
+}
+
+func TestPutCommitTwiceProducesSameID(t *testing.T) {
+	dir := t.TempDir()
+
+	commit := Commit{
+		Message: "first commit",
+		Files: map[string]Hash{
+			"a.txt": "abc123",
+		},
+	}
+
+	store := NewFsCommitStore(dir)
+
+	id1, err := store.Put(commit)
+	require.NoError(t, err)
+
+	id2, err := store.Put(commit)
+	require.NoError(t, err)
+
+	assert.Equal(t, id1, id2)
+}
+
+func TestPutCommitTwiceDoesNotDuplicateIt(t *testing.T) {
+	dir := t.TempDir()
+
+	commit := Commit{
+		Message: "first commit",
+		Files: map[string]Hash{
+			"a.txt": "abc123",
+		},
+	}
+
+	store := NewFsCommitStore(dir)
+
+	id1, err := store.Put(commit)
+	require.NoError(t, err)
+
+	id2, err := store.Put(commit)
+	require.NoError(t, err)
+
+	assert.Equal(t, id1, id2)
+
+	files, err := ListFiles(dir, "commits")
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, len(files), "Expected only one commit file in the store")
+}
+
+func TestGetNonExistentCommit(t *testing.T) {
+	dir := t.TempDir()
+
+	store := NewFsCommitStore(dir)
+
+	_, err := store.Get("nonexistent-id")
+
+	assert.Error(t, err, "Expected error when getting non-existent commit")
 }

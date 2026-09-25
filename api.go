@@ -3,8 +3,6 @@ package fit
 import (
 	"time"
 
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 )
 
@@ -77,18 +75,4 @@ func (i *IndexEntry) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-}
-
-func NewBlobID(data []byte) Hash {
-	sum := sha256.Sum256(data)
-	encoded := hex.EncodeToString(sum[:])
-	return Hash(encoded)
-}
-
-func NewCommitID(commit Commit) CommitID {
-	commit.ID = "" // exclude ID from the hash calculation
-	data, _ := json.Marshal(commit)
-	sum := sha256.Sum256(data)
-	encoded := hex.EncodeToString(sum[:])
-	return CommitID(encoded)
 }
