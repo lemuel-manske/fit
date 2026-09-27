@@ -7,7 +7,10 @@ import (
 // Add adds a file or directory to the index.
 // If the path is a directory, it recursively adds all files in that directory.
 func Add(fitDir string, path string) error {
-	index := LoadIndex(fitDir)
+	index, err := LoadIndex(fitDir)
+	if err != nil {
+		return err
+	}
 
 	store := NewFsBlobStore(fitDir)
 

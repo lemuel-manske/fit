@@ -321,6 +321,8 @@ func TestGetNonExistentCommit(t *testing.T) {
 func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
@@ -342,6 +344,8 @@ func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
 func TestFirstCommitMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
@@ -359,6 +363,8 @@ func TestFirstCommitMovesHEAD(t *testing.T) {
 
 func TestSecondCommitMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
+
+	Init(dir, "test-repo")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -388,6 +394,8 @@ func TestSecondCommitMovesHEAD(t *testing.T) {
 func TestFirstCommitContainsStagedFiles(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
@@ -410,6 +418,8 @@ func TestFirstCommitContainsStagedFiles(t *testing.T) {
 func TestCommitClearsIndex(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
@@ -419,13 +429,16 @@ func TestCommitClearsIndex(t *testing.T) {
 	_, err = CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	index := LoadIndex(dir)
+	index, err := LoadIndex(dir)
+	require.NoError(t, err)
 
 	require.Equal(t, 0, len(index.Entries), "Expected index to be cleared after commit")
 }
 
 func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 	dir := t.TempDir()
+
+	Init(dir, "test-repo")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)

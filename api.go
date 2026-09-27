@@ -31,6 +31,7 @@ type Author struct {
 	Name   string `json:"name"`
 }
 
+// Index represents the index of files in the repository.
 type Index struct {
 	Version int                   `json:"version"`
 	Entries map[string]IndexEntry `json:"entries"`
@@ -75,4 +76,38 @@ func (i *IndexEntry) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+// Config keeps track of peer metadata and repository information.
+type Config struct {
+	FormatVersion  int          `json:"formatVersion"`
+	RepositoryID   RepositoryID `json:"repositoryId"`
+	PeerID         PeerID       `json:"peerId"`
+	RepositoryName string       `json:"repositoryName"`
+}
+
+func (c *Config) UnmarshalJSON(data []byte) error {
+	type Alias Config
+
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Config) MarshalJSON() ([]byte, error) {
+	type Alias Config
+
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	})
 }

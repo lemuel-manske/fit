@@ -10,6 +10,8 @@ import (
 func TestRmNonExistentFile(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	err := Rm(dir, "nonexistent.txt")
 	require.Error(t, err)
 }
@@ -17,12 +19,16 @@ func TestRmNonExistentFile(t *testing.T) {
 func TestRmEmptyPath(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	err := Rm(dir, "")
 	require.Error(t, err)
 }
 
 func TestRmUntrackedFile(t *testing.T) {
 	dir := t.TempDir()
+
+	Init(dir, "test-repo")
 
 	_, err := WriteFile(dir, "untracked.txt", "I am untracked")
 	require.NoError(t, err)
@@ -36,6 +42,8 @@ func TestRmUntrackedFile(t *testing.T) {
 
 func TestRmAfterAdd(t *testing.T) {
 	dir := t.TempDir()
+
+	Init(dir, "test-repo")
 
 	_, err := WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -55,6 +63,8 @@ func TestRmAfterAdd(t *testing.T) {
 func TestAddAfterRm(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	_, err := WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
@@ -70,6 +80,8 @@ func TestAddAfterRm(t *testing.T) {
 
 func TestRmModifiedFile(t *testing.T) {
 	dir := t.TempDir()
+
+	Init(dir, "test-repo")
 
 	_, err := WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -94,6 +106,8 @@ func TestRmModifiedFile(t *testing.T) {
 func TestRmTwice(t *testing.T) {
 	dir := t.TempDir()
 
+	Init(dir, "test-repo")
+
 	_, err := WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
@@ -112,6 +126,8 @@ func TestRmTwice(t *testing.T) {
 
 func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 	dir := t.TempDir()
+
+	Init(dir, "test-repo")
 
 	_, err := WriteFile(dir, "test.txt", "Hello")
 	require.NoError(t, err)

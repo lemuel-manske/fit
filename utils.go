@@ -1,5 +1,9 @@
 package fit
 
+import (
+	"github.com/google/uuid"
+)
+
 func Map[T, U any](data []T, f func(T) U) []U {
 	res := make([]U, 0, len(data))
 
@@ -18,4 +22,13 @@ func MapValues[K comparable, V, U any](data map[K]V, f func(V) U) map[K]U {
 	}
 
 	return res
+}
+
+func IsUUID(s string) bool {
+	_, err := uuid.Parse(s)
+	return err == nil
+}
+
+func NewUUID() string {
+	return uuid.New().String()
 }
