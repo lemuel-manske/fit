@@ -1,5 +1,6 @@
 package fit
 
+// Init initializes a new repository in the specified directory with the given repository name.
 func Init(repoDir string, repoName string) error {
 	config := &Config{
 		FormatVersion:  FormatVersion,
@@ -16,6 +17,11 @@ func Init(repoDir string, repoName string) error {
 	}
 
 	WriteIndex(repoDir, index)
+
+	WriteHEAD(repoDir, "")
+
+	InitFsBlobStore(repoDir)
+	InitFsCommitStore(repoDir)
 
 	return nil
 }

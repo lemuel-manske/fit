@@ -95,3 +95,23 @@ func IsDir(elements... string) bool {
 
 	return info.IsDir()
 }
+
+func FileExists(elements... string) bool {
+	fileName := elements[len(elements)-1]
+
+	dir := filepath.Join(elements[:len(elements)-1]...)
+	path := filepath.Join(dir, fileName)
+
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
+}
+
+// GetCurrentDirectory returns the current working directory.
+func GetCurrentDirectory() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	return dir, nil
+}

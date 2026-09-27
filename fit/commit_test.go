@@ -8,127 +8,127 @@ import (
 )
 
 func TestSameCommitProducesSameID(t *testing.T) {
-    a := Commit{
-        Message: "first",
-        Files: map[string]Hash{
-            "a.txt": "aaa",
-            "b.txt": "bbb",
-        },
-    }
+	a := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-    b := Commit{
-        Message: "first",
-        Files: map[string]Hash{
-            "a.txt": "aaa",
-            "b.txt": "bbb",
-        },
-    }
+	b := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-    assert.Equal(t, NewCommitID(a), NewCommitID(b))
+	assert.Equal(t, NewCommitID(a), NewCommitID(b))
 }
 
 func TestCommitIDDoesNotDependOnFilesMapInsertionOrder(t *testing.T) {
-		a := Commit{
-				Message: "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	a := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		b := Commit{
-				Message: "first",
-				Files: map[string]Hash{
-						"b.txt": "bbb",
-						"a.txt": "aaa",
-				},
-		}
+	b := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"b.txt": "bbb",
+			"a.txt": "aaa",
+		},
+	}
 
-		assert.Equal(t, NewCommitID(a), NewCommitID(b))
+	assert.Equal(t, NewCommitID(a), NewCommitID(b))
 }
 
 func TestChangingCommitMessageChangesID(t *testing.T) {
-		a := Commit{
-				Message: "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	a := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		b := Commit{
-				Message: "second",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	b := Commit{
+		Message: "second",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
 }
 
 func TestChangingCommitFilesChangesID(t *testing.T) {
-		a := Commit{
-				Message: "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	a := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		b := Commit{
-				Message: "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "ccc", // changed content
-				},
-		}
+	b := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "ccc", // changed content
+		},
+	}
 
-		assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
 }
 
 func TestChangingCommitRepositoryIDChangesID(t *testing.T) {
-		a := Commit{
-				RepositoryID: "repo1",
-				Message:      "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	a := Commit{
+		RepositoryID: "repo1",
+		Message:      "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		b := Commit{
-				RepositoryID: "repo2", // changed repository ID
-				Message:      "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	b := Commit{
+		RepositoryID: "repo2", // changed repository ID
+		Message:      "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
 }
 
 func TestChangingCommitParentsChangesID(t *testing.T) {
-		a := Commit{
-				Parents: []CommitID{"parent1"},
-				Message: "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	a := Commit{
+		Parents: []CommitID{"parent1"},
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		b := Commit{
-				Parents: []CommitID{"parent2"}, // changed parent
-				Message: "first",
-				Files: map[string]Hash{
-						"a.txt": "aaa",
-						"b.txt": "bbb",
-				},
-		}
+	b := Commit{
+		Parents: []CommitID{"parent2"}, // changed parent
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
 
-		assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	assert.NotEqual(t, NewCommitID(a), NewCommitID(b))
 }
 
 func TestCommitIDIgnoresExistingID(t *testing.T) {
@@ -217,6 +217,8 @@ func TestChangingFileBlobChangesCommitID(t *testing.T) {
 func TestPutAndGetCommit(t *testing.T) {
 	dir := t.TempDir()
 
+	InitFsCommitStore(dir)
+
 	commit := Commit{
 		Message: "first commit",
 		Files: map[string]Hash{
@@ -239,6 +241,8 @@ func TestPutAndGetCommit(t *testing.T) {
 func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 	dir := t.TempDir()
 
+	InitFsCommitStore(dir)
+
 	commit := Commit{
 		Message: "first commit",
 		Files: map[string]Hash{
@@ -253,7 +257,7 @@ func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 
 	// Corrupt the commit file
 	WriteFile(
-		dir, "commits", string(id), "{\"message\":\"corrupted commit\"}",
+		dir, ".fit", "commits", string(id), "{\"message\":\"corrupted commit\"}",
 	)
 
 	_, err = store.Get(id)
@@ -263,6 +267,8 @@ func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 
 func TestPutCommitTwiceProducesSameID(t *testing.T) {
 	dir := t.TempDir()
+
+	InitFsCommitStore(dir)
 
 	commit := Commit{
 		Message: "first commit",
@@ -285,6 +291,8 @@ func TestPutCommitTwiceProducesSameID(t *testing.T) {
 func TestPutCommitTwiceDoesNotDuplicateIt(t *testing.T) {
 	dir := t.TempDir()
 
+	InitFsCommitStore(dir)
+
 	commit := Commit{
 		Message: "first commit",
 		Files: map[string]Hash{
@@ -302,7 +310,7 @@ func TestPutCommitTwiceDoesNotDuplicateIt(t *testing.T) {
 
 	assert.Equal(t, id1, id2)
 
-	files, err := ListFiles(dir, "commits")
+	files, err := ListFiles(dir, ".fit", "commits")
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(files), "Expected only one commit file in the store")
@@ -310,6 +318,8 @@ func TestPutCommitTwiceDoesNotDuplicateIt(t *testing.T) {
 
 func TestGetNonExistentCommit(t *testing.T) {
 	dir := t.TempDir()
+
+	InitFsCommitStore(dir)
 
 	store := NewFsCommitStore(dir)
 
@@ -433,6 +443,36 @@ func TestCommitClearsIndex(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 0, len(index.Entries), "Expected index to be cleared after commit")
+}
+
+func TestRmAfterCommit(t *testing.T) {
+	dir := t.TempDir()
+
+	err := Init(dir, "test-repo")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	_, err = CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	err = Rm(dir, "a.txt")
+	require.NoError(t, err)
+
+	index, err := LoadIndex(dir)
+	require.NoError(t, err)
+
+	entry, ok := index.Entries["a.txt"]
+	require.True(t, ok, "expected a.txt to exist in the index")
+
+	assert.True(t, entry.Delete, "expected a.txt to be staged for deletion")
+
+	_, err = ReadFile(dir, "a.txt")
+	require.Error(t, err, "expected a.txt to be removed from working tree")
 }
 
 func TestCommitUsesIndexNotWorkingTree(t *testing.T) {

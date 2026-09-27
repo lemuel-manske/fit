@@ -47,13 +47,15 @@ func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	dir := t.TempDir()
 
+	InitFsBlobStore(dir)
+
 	store := NewFsBlobStore(dir)
 
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
 
 	// write different content to the file
-	_, err = WriteFile(dir, "blobs", string(id), "world")
+	_, err = WriteFile(dir, ".fit", "blobs", string(id), "world")
 	require.NoError(t, err)
 
 	_, err = store.Get(id)
@@ -63,13 +65,15 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	dir := t.TempDir()
 
+	InitFsBlobStore(dir)
+
 	store := NewFsBlobStore(dir)
 
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
 
 	// write different content to the file
-	_, err = WriteFile(dir, "blobs", string(id), "world")
+	_, err = WriteFile(dir, ".fit", "blobs", string(id), "world")
 	require.NoError(t, err)
 
 	// put the same blob again
@@ -87,6 +91,8 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 
 func TestGetNonExistentBlobReturnsError(t *testing.T) {
 	dir := t.TempDir()
+
+	InitFsBlobStore(dir)
 
 	store := NewFsBlobStore(dir)
 
