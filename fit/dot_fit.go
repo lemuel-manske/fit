@@ -17,7 +17,7 @@ const (
 	indexFileName  = "index.json"
 	headFileName   = "HEAD"
 
-	blobDir = "blobs"
+	blobsDir = "blobs"
 	commitsDir = "commits"
 )
 
@@ -135,7 +135,7 @@ func HEADContains(dir string, path string) (bool, error) {
 		return false, err
 	}
 
-	if headID == "" {
+	if IsEmpty(string(headID)) {
 		return false, nil
 	}
 
@@ -187,7 +187,7 @@ func CurrentCommit(dir string) (Commit, error) {
 		return Commit{}, err
 	}
 
-	if headID == "" {
+	if IsEmpty(string(headID)) {
 		return Commit{}, nil
 	}
 
@@ -210,7 +210,7 @@ type FsCommitStore struct {
 	dir string
 }
 
-func InitFsCommitStore(dir string) error {
+func InitCommitStore(dir string) error {
 	commitDirPath := MakePath(dir, commitsDir)
 
 	// ensure the commits directory exists
@@ -247,7 +247,7 @@ func (s *FsCommitStore) Put(commit Commit) (CommitID, error) {
 }
 
 func (s *FsCommitStore) Get(id CommitID) (Commit, error) {
-	if id == "" {
+	if IsEmpty(string(id)) {
 		return Commit{}, fmt.Errorf("commit ID cannot be empty")
 	}
 
@@ -289,8 +289,8 @@ type FsBlobStore struct {
 	dir string
 }
 
-func InitFsBlobStore(dir string) error {
-	blobDirPath := MakePath(dir, blobDir)
+func InitBlobStore(dir string) error {
+	blobDirPath := MakePath(dir, blobsDir)
 
 	// ensure the blobs directory exists
 	if err := os.MkdirAll(blobDirPath, 0755); err != nil {
@@ -305,7 +305,7 @@ func NewBlobStore(dir string) *FsBlobStore {
 }
 
 func (s *FsBlobStore) Put(data []byte) (Hash, error) {
-	dir := MakePath(s.dir, blobDir)
+	dir := MakePath(s.dir, blobsDir)
 
 	id := NewBlobID(data)
 	path := filepath.Join(dir, string(id))
@@ -319,7 +319,7 @@ func (s *FsBlobStore) Put(data []byte) (Hash, error) {
 }
 
 func (s *FsBlobStore) Get(id Hash) ([]byte, error) {
-	dir := MakePath(s.dir, blobDir)
+	dir := MakePath(s.dir, blobsDir)
 
 	path := filepath.Join(dir, string(id))
 

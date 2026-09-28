@@ -47,15 +47,14 @@ func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	dir := t.TempDir()
 
-	InitFsBlobStore(dir)
+	InitBlobStore(dir)
 
 	store := NewBlobStore(dir)
 
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
 
-	// write different content to the file
-	_, err = WriteFile(dir, ".fit", "blobs", string(id), "world")
+	err = CorruptBlob(dir, id, "world")
 	require.NoError(t, err)
 
 	_, err = store.Get(id)
@@ -65,19 +64,21 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	dir := t.TempDir()
 
-	InitFsBlobStore(dir)
+	InitBlobStore(dir)
 
 	store := NewBlobStore(dir)
 
-	id, err := store.Put([]byte("hello"))
+	initialContent := []byte("hello")
+
+	id, err := store.Put(initialContent)
 	require.NoError(t, err)
 
 	// write different content to the file
-	_, err = WriteFile(dir, ".fit", "blobs", string(id), "world")
+	err = CorruptBlob(dir, id, "world")
 	require.NoError(t, err)
 
 	// put the same blob again
-	id2, err := store.Put([]byte("hello"))
+	id2, err := store.Put(initialContent)
 	require.NoError(t, err)
 
 	assert.Equal(t, id, id2, "Put should return the same ID for the same content")
@@ -86,13 +87,13 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	content, err := store.Get(id)
 	require.NoError(t, err)
 
-	assert.Equal(t, []byte("hello"), content, "Get should return the original content")
+	assert.Equal(t, initialContent, content, "Get should return the original content")
 }
 
 func TestGetNonExistentBlobReturnsError(t *testing.T) {
 	dir := t.TempDir()
 
-	InitFsBlobStore(dir)
+	InitBlobStore(dir)
 
 	store := NewBlobStore(dir)
 

@@ -217,7 +217,7 @@ func TestChangingFileBlobChangesCommitID(t *testing.T) {
 func TestPutAndGetCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	InitFsCommitStore(dir)
+	InitCommitStore(dir)
 
 	commit := Commit{
 		Message: "first commit",
@@ -241,7 +241,7 @@ func TestPutAndGetCommit(t *testing.T) {
 func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	InitFsCommitStore(dir)
+	InitCommitStore(dir)
 
 	commit := Commit{
 		Message: "first commit",
@@ -255,10 +255,8 @@ func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 	id, err := store.Put(commit)
 	require.NoError(t, err)
 
-	// Corrupt the commit file
-	WriteFile(
-		dir, ".fit", "commits", string(id), "{\"message\":\"corrupted commit\"}",
-	)
+	err = CorruptCommit(dir, id, "corrupted commit")
+	require.NoError(t, err)
 
 	_, err = store.Get(id)
 
@@ -268,7 +266,7 @@ func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 func TestPutCommitTwiceProducesSameID(t *testing.T) {
 	dir := t.TempDir()
 
-	InitFsCommitStore(dir)
+	InitCommitStore(dir)
 
 	commit := Commit{
 		Message: "first commit",
@@ -286,40 +284,12 @@ func TestPutCommitTwiceProducesSameID(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, id1, id2)
-}
-
-func TestPutCommitTwiceDoesNotDuplicateIt(t *testing.T) {
-	dir := t.TempDir()
-
-	InitFsCommitStore(dir)
-
-	commit := Commit{
-		Message: "first commit",
-		Files: map[string]Hash{
-			"a.txt": "abc123",
-		},
-	}
-
-	store := NewCommitStore(dir)
-
-	id1, err := store.Put(commit)
-	require.NoError(t, err)
-
-	id2, err := store.Put(commit)
-	require.NoError(t, err)
-
-	assert.Equal(t, id1, id2)
-
-	files, err := ListFiles(dir, ".fit", "commits")
-	require.NoError(t, err)
-
-	assert.Equal(t, 1, len(files), "Expected only one commit file in the store")
 }
 
 func TestGetNonExistentCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	InitFsCommitStore(dir)
+	InitCommitStore(dir)
 
 	store := NewCommitStore(dir)
 

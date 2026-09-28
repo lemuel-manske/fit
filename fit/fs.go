@@ -7,10 +7,6 @@ import (
 )
 
 // WriteFile creates a new file with the given content.
-// The last element of the elements slice is the content,
-// the second to last is the fileName, and the rest are directories.
-// If the directories do not exist, they will be created.
-// If the file already exists, it will be overwritten.
 func WriteFile(elements... string) (string, error) {
 	content := elements[len(elements)-1]
 	fileName := elements[len(elements)-2]

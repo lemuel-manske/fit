@@ -144,7 +144,8 @@ func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 
 	content, err := ReadFile(dir, "test.txt")
 	require.NoError(t, err)
-	require.Equal(t, "Hola", string(content))
+
+	assert.Equal(t, "Hola", string(content))
 
 	// second rm: remove from working tree
 	err = Rm(dir, "test.txt")

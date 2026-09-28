@@ -20,8 +20,8 @@ func Init(repoDir string, repoName string) error {
 
 	WriteHEAD(repoDir, "")
 
-	InitFsBlobStore(repoDir)
-	InitFsCommitStore(repoDir)
+	InitBlobStore(repoDir)
+	InitCommitStore(repoDir)
 
 	return nil
 }

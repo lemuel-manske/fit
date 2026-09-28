@@ -6,7 +6,7 @@ import (
 
 // Rm removes a file or directory from the index.
 func Rm(dir string, path string) error {
-	if path == "" {
+	if IsEmpty(path) {
 		return fmt.Errorf("path cannot be empty")
 	}
 

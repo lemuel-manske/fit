@@ -32,3 +32,7 @@ func IsUUID(s string) bool {
 func NewUUID() string {
 	return uuid.New().String()
 }
+
+func IsEmpty(s string) bool {
+	return len(s) == 0
+}
