@@ -20,7 +20,13 @@ func CommitChanges(dir string, message string) (CommitID, error) {
 		files[path] = Hash(entry.Blob)
 	}
 
+	headID, err := ReadHEAD(dir)
+	if err != nil {
+		return "", err
+	}
+
 	commit := Commit{
+		Parents: []CommitID{headID},
 		Message: message,
 		Files:   files,
 	}

@@ -471,3 +471,84 @@ func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 
 	require.Equal(t, hash, commit.Files["a.txt"])
 }
+
+func TestCommitKeepsParentCommits(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test-repo")
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	id1, err := CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "b.txt", "World")
+	require.NoError(t, err)
+
+	err = Add(dir, "b.txt")
+	require.NoError(t, err)
+
+	id2, err := CommitChanges(dir, "second commit")
+	require.NoError(t, err)
+
+	store := NewCommitStore(dir)
+
+	commit2, err := store.Get(id2)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, len(commit2.Parents), "expected second commit to have one parent")
+	assert.Equal(t, id1, commit2.Parents[0], "expected first commit to be the parent of the second commit")
+}
+
+func TestCommitWithNAncestors(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test-repo")
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	id1, err := CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "b.txt", "World")
+	require.NoError(t, err)
+
+	err = Add(dir, "b.txt")
+	require.NoError(t, err)
+
+	id2, err := CommitChanges(dir, "second commit")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "c.txt", "!")
+	require.NoError(t, err)
+
+	err = Add(dir, "c.txt")
+	require.NoError(t, err)
+
+	id3, err := CommitChanges(dir, "third commit")
+	require.NoError(t, err)
+
+	id1AncestorID3, err := Ancestor(dir, id3, id1)
+	require.NoError(t, err)
+
+	assert.True(t, id1AncestorID3, "expected first commit to be an ancestor of the third commit")
+
+	id2AncestorID3, err := Ancestor(dir, id3, id2)
+	require.NoError(t, err)
+
+	assert.True(t, id2AncestorID3, "expected second commit to be an ancestor of the third commit")
+
+	id3AncestorID1, err := Ancestor(dir, id1, id3)
+	require.NoError(t, err)
+
+	assert.False(t, id3AncestorID1, "expected third commit not to be an ancestor of the first commit")
+}
+

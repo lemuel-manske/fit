@@ -17,12 +17,12 @@ const (
 	indexFileName  = "index.json"
 	headFileName   = "HEAD"
 
-	blobsDir = "blobs"
+	blobsDir   = "blobs"
 	commitsDir = "commits"
 )
 
 const (
-	ErrCorruptedBlob = "corrupted blob: content does not match its ID"
+	ErrCorruptedBlob   = "corrupted blob: content does not match its ID"
 	ErrCorruptedCommit = "corrupted commit: content does not match its ID"
 )
 
@@ -173,14 +173,6 @@ func StagedBlob(dir string, file string) ([]byte, error) {
 	return content, nil
 }
 
-func NewCommitID(commit Commit) CommitID {
-	commit.ID = "" // exclude ID from the hash calculation
-	data, _ := json.Marshal(commit)
-	sum := sha256.Sum256(data)
-	encoded := hex.EncodeToString(sum[:])
-	return CommitID(encoded)
-}
-
 func CurrentCommit(dir string) (Commit, error) {
 	headID, err := ReadHEAD(dir)
 	if err != nil {
@@ -199,6 +191,56 @@ func CurrentCommit(dir string) (Commit, error) {
 	}
 
 	return commit, nil
+}
+
+func Ancestor(dir string, commitID CommitID, ancestorID CommitID) (bool, error) {
+	store := NewCommitStore(dir)
+	visited := make(map[CommitID]struct{})
+
+	var walk func(CommitID) (bool, error)
+
+	walk = func(id CommitID) (bool, error) {
+		if id == ancestorID {
+			return true, nil
+		}
+
+		if _, ok := visited[id]; ok {
+			return false, nil
+		}
+		visited[id] = struct{}{}
+
+		if IsEmpty(string(id)) {
+			return false, nil
+		}
+
+		commit, err := store.Get(id)
+		if err != nil {
+			return false, err
+		}
+
+		for _, parentID := range commit.Parents {
+			found, err := walk(parentID)
+			if err != nil {
+				return false, err
+			}
+
+			if found {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}
+
+	return walk(commitID)
+}
+
+func NewCommitID(commit Commit) CommitID {
+	commit.ID = "" // exclude ID from the hash calculation
+	data, _ := json.Marshal(commit)
+	sum := sha256.Sum256(data)
+	encoded := hex.EncodeToString(sum[:])
+	return CommitID(encoded)
 }
 
 type CommitStore interface {
