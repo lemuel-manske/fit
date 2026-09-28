@@ -96,6 +96,7 @@ func IsDir(elements... string) bool {
 	return info.IsDir()
 }
 
+// FileExists checks if a file exists at the given path.
 func FileExists(elements... string) bool {
 	fileName := elements[len(elements)-1]
 
@@ -106,8 +107,8 @@ func FileExists(elements... string) bool {
 	return !os.IsNotExist(err)
 }
 
-// GetCurrentDirectory returns the current working directory.
-func GetCurrentDirectory() (string, error) {
+// GetCurrentDir returns the current working directory.
+func GetCurrentDir() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return "", err

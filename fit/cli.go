@@ -37,7 +37,7 @@ func NewInitCmd() *cobra.Command {
 		Args: cobra.ExactArgs(0),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDirectory()
+			currDir, err := GetCurrentDir()
 			if err != nil {
 				return err
 			}
@@ -56,7 +56,7 @@ func NewAddCmd() *cobra.Command {
 		Args: cobra.ExactArgs(1),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDirectory()
+			currDir, err := GetCurrentDir()
 			if err != nil {
 				return err
 			}
@@ -73,7 +73,7 @@ func NewRmCmd() *cobra.Command {
 		Args: cobra.ExactArgs(1),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDirectory()
+			currDir, err := GetCurrentDir()
 			if err != nil {
 				return err
 			}
@@ -90,7 +90,7 @@ func NewCommitCmd() *cobra.Command {
 		Args: cobra.ExactArgs(1),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDirectory()
+			currDir, err := GetCurrentDir()
 			if err != nil {
 				return err
 			}
