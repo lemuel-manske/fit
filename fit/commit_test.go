@@ -238,6 +238,24 @@ func TestPutAndGetCommit(t *testing.T) {
 	assert.Equal(t, commit.Files, got.Files)
 }
 
+func TestCommitStoreRejectsUnsafeManifestPath(t *testing.T) {
+	dir := t.TempDir()
+
+	InitCommitStore(dir)
+
+	commit := Commit{
+		Files: map[string]Hash{
+			"../outside.txt": "abc",
+		},
+	}
+
+	store := NewCommitStore(dir)
+
+	_, err := store.Put(commit)
+
+	require.Error(t, err)
+}
+
 func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 	dir := t.TempDir()
 

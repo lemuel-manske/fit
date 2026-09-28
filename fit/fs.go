@@ -2,6 +2,7 @@ package fit
 
 import (
 	"os"
+	"strings"
 
 	"path/filepath"
 )
@@ -101,6 +102,23 @@ func FileExists(elements... string) bool {
 
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
+}
+
+func DirContains(elements... string) bool {
+	dir := elements[0]
+	path := filepath.Join(elements...)
+
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return false
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+
+	return strings.HasPrefix(absPath, absDir)
 }
 
 // GetCurrentDir returns the current working directory.

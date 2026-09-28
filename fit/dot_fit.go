@@ -3,6 +3,7 @@ package fit
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"crypto/sha256"
 	"encoding/hex"
@@ -11,27 +12,27 @@ import (
 )
 
 const (
-	fitDir = ".fit"
+	FirDir = ".fit"
 
-	configFileName = "config.json"
-	indexFileName  = "index.json"
-	headFileName   = "HEAD"
+	ConfigFileName = "config.json"
+	IndexFileName  = "index.json"
+	HeadFileName   = "HEAD"
 
-	blobsDir   = "blobs"
-	commitsDir = "commits"
+	BlobsDir   = "blobs"
+	CommitsDir = "commits"
 )
 
 const (
-	ErrCorruptedBlob   = "corrupted blob: content does not match its ID"
-	ErrCorruptedCommit = "corrupted commit: content does not match its ID"
+	ErrCorruptedBlob   = "corrupted blob"
+	ErrCorruptedCommit = "corrupted commit"
 )
 
 func MakePath(dir string, file string) string {
-	return filepath.Join(dir, fitDir, file)
+	return filepath.Join(dir, FirDir, file)
 }
 
 func LoadIndex(dir string) (*Index, error) {
-	indexPath := MakePath(dir, indexFileName)
+	indexPath := MakePath(dir, IndexFileName)
 
 	index := &Index{}
 
@@ -49,7 +50,7 @@ func LoadIndex(dir string) (*Index, error) {
 }
 
 func WriteIndex(dir string, index *Index) error {
-	indexPath := MakePath(dir, indexFileName)
+	indexPath := MakePath(dir, IndexFileName)
 
 	data, err := json.Marshal(index)
 	if err != nil {
@@ -72,7 +73,7 @@ func WriteIndex(dir string, index *Index) error {
 }
 
 func LoadConfig(dir string) (*Config, error) {
-	configPath := MakePath(dir, configFileName)
+	configPath := MakePath(dir, ConfigFileName)
 
 	config := &Config{}
 
@@ -90,7 +91,7 @@ func LoadConfig(dir string) (*Config, error) {
 }
 
 func WriteConfig(dir string, config *Config) error {
-	configPath := MakePath(dir, configFileName)
+	configPath := MakePath(dir, ConfigFileName)
 
 	data, err := json.Marshal(config)
 	if err != nil {
@@ -113,13 +114,13 @@ func WriteConfig(dir string, config *Config) error {
 }
 
 func WriteHEAD(dir string, commitID CommitID) error {
-	path := MakePath(dir, headFileName)
+	path := MakePath(dir, HeadFileName)
 
 	return os.WriteFile(path, []byte(commitID), 0644)
 }
 
 func ReadHEAD(dir string) (CommitID, error) {
-	path := MakePath(dir, headFileName)
+	path := MakePath(dir, HeadFileName)
 
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -156,14 +157,16 @@ func StagedBlob(dir string, file string) ([]byte, error) {
 		return nil, err
 	}
 
-	store := NewBlobStore(dir)
-
 	entry, ok := index.Entries[file]
 	if !ok {
-		err = fmt.Errorf("file %s is not staged", file)
-
-		return nil, err
+		return nil, fmt.Errorf("file %s is not staged", file)
 	}
+
+	if entry.Delete {
+		return nil, fmt.Errorf("file %s is staged for deletion", file)
+	}
+
+	store := NewBlobStore(dir)
 
 	content, err := store.Get(Hash(entry.Blob))
 	if err != nil {
@@ -191,6 +194,22 @@ func CurrentCommit(dir string) (Commit, error) {
 	}
 
 	return commit, nil
+}
+
+func UnderFitDir(dir string, path string) bool {
+	fitPath := MakePath(dir, "")
+
+	absFitPath, err := filepath.Abs(fitPath)
+	if err != nil {
+		return false
+	}
+
+	absPath, err := filepath.Abs(filepath.Join(dir, path))
+	if err != nil {
+		return false
+	}
+
+	return strings.HasPrefix(absPath, absFitPath)
 }
 
 func Ancestor(dir string, commitID CommitID, ancestorID CommitID) (bool, error) {
@@ -253,7 +272,7 @@ type FsCommitStore struct {
 }
 
 func InitCommitStore(dir string) error {
-	commitDirPath := MakePath(dir, commitsDir)
+	commitDirPath := MakePath(dir, CommitsDir)
 
 	// ensure the commits directory exists
 	if err := os.MkdirAll(commitDirPath, 0755); err != nil {
@@ -268,7 +287,20 @@ func NewCommitStore(dir string) *FsCommitStore {
 }
 
 func (s *FsCommitStore) Put(commit Commit) (CommitID, error) {
-	dir := MakePath(s.dir, commitsDir)
+	dir := MakePath(s.dir, CommitsDir)
+
+	for path, _ := range commit.Files {
+			err := ValidateRepoPath(path)
+
+			if err != nil {
+				return "", fmt.Errorf(
+					"%s: invalid path %q: %w",
+					ErrCorruptedCommit,
+					path,
+					err,
+				)
+			}
+	}
 
 	id := NewCommitID(commit)
 	commit.ID = id // set the ID in the commit struct
@@ -293,7 +325,7 @@ func (s *FsCommitStore) Get(id CommitID) (Commit, error) {
 		return Commit{}, fmt.Errorf("commit ID cannot be empty")
 	}
 
-	dir := MakePath(s.dir, commitsDir)
+	dir := MakePath(s.dir, CommitsDir)
 
 	path := filepath.Join(dir, string(id))
 
@@ -332,7 +364,7 @@ type FsBlobStore struct {
 }
 
 func InitBlobStore(dir string) error {
-	blobDirPath := MakePath(dir, blobsDir)
+	blobDirPath := MakePath(dir, BlobsDir)
 
 	// ensure the blobs directory exists
 	if err := os.MkdirAll(blobDirPath, 0755); err != nil {
@@ -347,7 +379,7 @@ func NewBlobStore(dir string) *FsBlobStore {
 }
 
 func (s *FsBlobStore) Put(data []byte) (Hash, error) {
-	dir := MakePath(s.dir, blobsDir)
+	dir := MakePath(s.dir, BlobsDir)
 
 	id := NewBlobID(data)
 	path := filepath.Join(dir, string(id))
@@ -361,7 +393,7 @@ func (s *FsBlobStore) Put(data []byte) (Hash, error) {
 }
 
 func (s *FsBlobStore) Get(id Hash) ([]byte, error) {
-	dir := MakePath(s.dir, blobsDir)
+	dir := MakePath(s.dir, BlobsDir)
 
 	path := filepath.Join(dir, string(id))
 

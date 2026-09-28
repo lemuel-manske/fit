@@ -100,3 +100,23 @@ func TestGetNonExistentBlobReturnsError(t *testing.T) {
 	_, err := store.Get("nonexistent")
 	assert.Error(t, err, "Get should return an error for a non-existent blob")
 }
+
+func TestStagedBlobReturnsErrorForStagedDeletion(t *testing.T) {
+	dir := t.TempDir()
+
+	entries := make(map[string]IndexEntry)
+	entries["a.txt"] = IndexEntry{
+		Delete: true,
+	}
+
+	index := &Index{
+		Entries: entries,
+	}
+
+	err := WriteIndex(dir, index)
+	require.NoError(t, err)
+
+	_, err = StagedBlob(dir, "a.txt")
+
+	assert.Error(t, err, "StagedBlob should return an error for a staged deletion")
+}

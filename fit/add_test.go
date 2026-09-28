@@ -141,3 +141,41 @@ func TestAddDir(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Goodbye, World!", string(staged2))
 }
+
+func TestAddRejectsPathOutsideRepo(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := WriteFile(dir, "..", "test.txt", "Hello, World!")
+	require.NoError(t, err)
+
+	err = Add(dir, "../test.txt")
+	require.Error(t, err)
+}
+
+func TestAddRejectsAbsolutePath(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
+
+	absPath := dir + "/test.txt"
+
+	err = Add(dir, absPath)
+	require.Error(t, err)
+}
+
+func TestAddRejectsPathUnderFitDir(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := WriteFile(dir, ".fit", "test.txt", "Hello, World!")
+	require.NoError(t, err)
+
+	err = Add(dir, ".fit/test.txt")
+	require.Error(t, err)
+}
