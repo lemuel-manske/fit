@@ -48,7 +48,10 @@ func Add(dir string, path string) error {
 		Blob: string(blobID),
 	}
 
-	WriteIndex(dir, index)
+	err = WriteIndex(dir, index)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

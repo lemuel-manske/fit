@@ -301,7 +301,7 @@ func TestGetNonExistentCommit(t *testing.T) {
 func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -324,7 +324,7 @@ func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
 func TestFirstCommitMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -344,7 +344,7 @@ func TestFirstCommitMovesHEAD(t *testing.T) {
 func TestSecondCommitMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -374,7 +374,7 @@ func TestSecondCommitMovesHEAD(t *testing.T) {
 func TestFirstCommitContainsStagedFiles(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -398,7 +398,7 @@ func TestFirstCommitContainsStagedFiles(t *testing.T) {
 func TestCommitClearsIndex(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -418,7 +418,7 @@ func TestCommitClearsIndex(t *testing.T) {
 func TestRmAfterCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	err := Init(dir, "test-repo")
+	err := Init(dir, "test")
 	require.NoError(t, err)
 
 	_, err = WriteFile(dir, "a.txt", "Hello")
@@ -448,7 +448,7 @@ func TestRmAfterCommit(t *testing.T) {
 func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -475,7 +475,7 @@ func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 func TestCommitKeepsParentCommits(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -507,7 +507,7 @@ func TestCommitKeepsParentCommits(t *testing.T) {
 func TestCommitWithNAncestors(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	Init(dir, "test")
 
 	_, err := WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -552,3 +552,89 @@ func TestCommitWithNAncestors(t *testing.T) {
 	assert.False(t, id3AncestorID1, "expected third commit not to be an ancestor of the first commit")
 }
 
+func TestSecondCommitKeepsFilesFromParent(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	_, err = CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "b.txt", "World")
+	require.NoError(t, err)
+
+	err = Add(dir, "b.txt")
+	require.NoError(t, err)
+
+	id2, err := CommitChanges(dir, "second commit")
+	require.NoError(t, err)
+
+	store := NewCommitStore(dir)
+
+	commit2, err := store.Get(id2)
+	require.NoError(t, err)
+
+	hashA := NewBlobID([]byte("Hello"))
+	hashB := NewBlobID([]byte("World"))
+
+	assert.Equal(t, hashA, commit2.Files["a.txt"], "expected second commit to keep file from first commit")
+	assert.Equal(t, hashB, commit2.Files["b.txt"], "expected second commit to have new file")
+}
+
+func TestFirstCommitHasNoParents(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	id, err := CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	store := NewCommitStore(dir)
+
+	commit, err := store.Get(id)
+	require.NoError(t, err)
+
+	assert.Empty(t, commit.Parents, "expected first commit to have no parents")
+}
+
+func TestCommitAppliesStagedDeletion(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	_, err = CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	// Stage deletion of a.txt
+	err = Rm(dir, "a.txt")
+	require.NoError(t, err)
+
+	id, err := CommitChanges(dir, "remove a")
+	require.NoError(t, err)
+
+	store := NewCommitStore(dir)
+
+	commit, err := store.Get(id)
+	require.NoError(t, err)
+
+	_, exists := commit.Files["a.txt"]
+	assert.False(t, exists, "expected a.txt to be removed from commit after staged deletion")
+}

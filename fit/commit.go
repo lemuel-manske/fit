@@ -8,7 +8,27 @@ func CommitChanges(dir string, message string) (CommitID, error) {
 		return "", err
 	}
 
+	headID, err := ReadHEAD(dir)
+	if err != nil {
+		return "", err
+	}
+
 	files := make(map[string]Hash)
+
+	hasHEAD := !IsEmpty(string(headID))
+
+	if hasHEAD {
+		parentCommit, err := store.Get(headID)
+		if err != nil {
+			return "", err
+		}
+
+		for path, hash := range parentCommit.Files {
+			if _, ok := files[path]; !ok {
+				files[path] = hash
+			}
+		}
+	}
 
 	for path, entry := range index.Entries {
 		if entry.Delete {
@@ -20,13 +40,14 @@ func CommitChanges(dir string, message string) (CommitID, error) {
 		files[path] = Hash(entry.Blob)
 	}
 
-	headID, err := ReadHEAD(dir)
-	if err != nil {
-		return "", err
+	parents := []CommitID{}
+
+	if hasHEAD {
+		parents = append(parents, headID)
 	}
 
 	commit := Commit{
-		Parents: []CommitID{headID},
+		Parents: parents,
 		Message: message,
 		Files:   files,
 	}
@@ -36,11 +57,17 @@ func CommitChanges(dir string, message string) (CommitID, error) {
 		return "", err
 	}
 
-	WriteHEAD(dir, commitID)
+	err = WriteHEAD(dir, commitID)
+	if err != nil {
+		return "", err
+	}
 
 	clear(index.Entries)
 
-	WriteIndex(dir, index)
+	err = WriteIndex(dir, index)
+	if err != nil {
+		return "", err
+	}
 
 	return commitID, nil
 }
