@@ -290,7 +290,7 @@ func NewCommitStore(dir string) *FsCommitStore {
 func (s *FsCommitStore) Put(commit Commit) (CommitID, error) {
 	dir := MakePath(s.dir, CommitsDir)
 
-	for path, _ := range commit.Files {
+	for path := range commit.Files {
 			err := ValidateRepoPath(path)
 
 			if err != nil {
