@@ -49,7 +49,7 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 
 	InitFsBlobStore(dir)
 
-	store := NewFsBlobStore(dir)
+	store := NewBlobStore(dir)
 
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
@@ -67,7 +67,7 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 
 	InitFsBlobStore(dir)
 
-	store := NewFsBlobStore(dir)
+	store := NewBlobStore(dir)
 
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestGetNonExistentBlobReturnsError(t *testing.T) {
 
 	InitFsBlobStore(dir)
 
-	store := NewFsBlobStore(dir)
+	store := NewBlobStore(dir)
 
 	_, err := store.Get("nonexistent")
 	assert.Error(t, err, "Get should return an error for a non-existent blob")

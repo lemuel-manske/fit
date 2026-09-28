@@ -139,7 +139,7 @@ func HEADContains(dir string, path string) (bool, error) {
 		return false, nil
 	}
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	commit, err := store.Get(headID)
 	if err != nil {
@@ -156,7 +156,7 @@ func StagedBlob(dir string, file string) ([]byte, error) {
 		return nil, err
 	}
 
-	store := NewFsBlobStore(dir)
+	store := NewBlobStore(dir)
 
 	entry, ok := index.Entries[file]
 	if !ok {
@@ -201,7 +201,7 @@ func InitFsCommitStore(dir string) error {
 	return nil
 }
 
-func NewFsCommitStore(dir string) *FsCommitStore {
+func NewCommitStore(dir string) *FsCommitStore {
 	return &FsCommitStore{dir: dir}
 }
 
@@ -280,7 +280,7 @@ func InitFsBlobStore(dir string) error {
 	return nil
 }
 
-func NewFsBlobStore(dir string) *FsBlobStore {
+func NewBlobStore(dir string) *FsBlobStore {
 	return &FsBlobStore{dir: dir}
 }
 

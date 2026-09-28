@@ -12,7 +12,7 @@ func Add(dir string, path string) error {
 		return err
 	}
 
-	store := NewFsBlobStore(dir)
+	store := NewBlobStore(dir)
 
 	if path == "" {
 		return fmt.Errorf("path cannot be empty")

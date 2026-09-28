@@ -1,7 +1,7 @@
 package fit
 
 func CommitChanges(dir string, message string) (CommitID, error) {
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	index, err := LoadIndex(dir)
 	if err != nil {

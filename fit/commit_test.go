@@ -226,7 +226,7 @@ func TestPutAndGetCommit(t *testing.T) {
 		},
 	}
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	id, err := store.Put(commit)
 	require.NoError(t, err)
@@ -250,7 +250,7 @@ func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 		},
 	}
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	id, err := store.Put(commit)
 	require.NoError(t, err)
@@ -277,7 +277,7 @@ func TestPutCommitTwiceProducesSameID(t *testing.T) {
 		},
 	}
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	id1, err := store.Put(commit)
 	require.NoError(t, err)
@@ -300,7 +300,7 @@ func TestPutCommitTwiceDoesNotDuplicateIt(t *testing.T) {
 		},
 	}
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	id1, err := store.Put(commit)
 	require.NoError(t, err)
@@ -321,7 +321,7 @@ func TestGetNonExistentCommit(t *testing.T) {
 
 	InitFsCommitStore(dir)
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	_, err := store.Get("nonexistent-id")
 
@@ -415,7 +415,7 @@ func TestFirstCommitContainsStagedFiles(t *testing.T) {
 	id, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	commit, err := store.Get(id)
 	require.NoError(t, err)
@@ -492,7 +492,7 @@ func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 	id, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	store := NewFsCommitStore(dir)
+	store := NewCommitStore(dir)
 
 	commit, err := store.Get(id)
 	require.NoError(t, err)
