@@ -212,14 +212,15 @@ func UnderFitDir(dir string, path string) bool {
 	return strings.HasPrefix(absPath, absFitPath)
 }
 
-func Ancestor(dir string, commitID CommitID, ancestorID CommitID) (bool, error) {
+func IsParent(dir string, source CommitID, target CommitID) (bool, error) {
 	store := NewCommitStore(dir)
+
 	visited := make(map[CommitID]struct{})
 
 	var walk func(CommitID) (bool, error)
 
 	walk = func(id CommitID) (bool, error) {
-		if id == ancestorID {
+		if id == target {
 			return true, nil
 		}
 
@@ -251,7 +252,7 @@ func Ancestor(dir string, commitID CommitID, ancestorID CommitID) (bool, error) 
 		return false, nil
 	}
 
-	return walk(commitID)
+	return walk(source)
 }
 
 func NewCommitID(commit Commit) CommitID {

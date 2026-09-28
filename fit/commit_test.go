@@ -26,7 +26,7 @@ func TestSameCommitProducesSameID(t *testing.T) {
 	require.Equal(t, NewCommitID(a), NewCommitID(b))
 }
 
-func TestCommitIDDoesNotDependOnFilesMapInsertionOrder(t *testing.T) {
+func TestCommitIDIgnoresFileOrder(t *testing.T) {
 	a := Commit{
 		Message: "first",
 		Files: map[string]Hash{
@@ -151,28 +151,6 @@ func TestCommitIDIgnoresExistingID(t *testing.T) {
 	require.Equal(t, NewCommitID(a), NewCommitID(b))
 }
 
-func TestCommitIDIsIndependentOfFilesInsertionOrder(t *testing.T) {
-	a := Commit{
-		Message: "first",
-		Files: map[string]Hash{
-			"a.txt": "aaa",
-			"b.txt": "bbb",
-			"c.txt": "ccc",
-		},
-	}
-
-	b := Commit{
-		Message: "first",
-		Files: map[string]Hash{
-			"c.txt": "ccc",
-			"a.txt": "aaa",
-			"b.txt": "bbb",
-		},
-	}
-
-	require.Equal(t, NewCommitID(a), NewCommitID(b))
-}
-
 func TestChangingMessageChangesCommitID(t *testing.T) {
 	a := Commit{
 		Message: "first",
@@ -207,6 +185,26 @@ func TestChangingFileBlobChangesCommitID(t *testing.T) {
 		Files: map[string]Hash{
 			"a.txt": "aaa",
 			"b.txt": "ccc", // changed blob
+		},
+	}
+
+	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+}
+
+func TestCommitIDChangesWithContent(t *testing.T) {
+	a := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "bbb",
+		},
+	}
+
+	b := Commit{
+		Message: "first",
+		Files: map[string]Hash{
+			"a.txt": "aaa",
+			"b.txt": "ccc", // changed content
 		},
 	}
 
@@ -460,6 +458,36 @@ func TestRmAfterCommit(t *testing.T) {
 
 	_, err = ReadFile(dir, "a.txt")
 	require.Error(t, err, "expected a.txt to be removed from working tree")
+}
+
+func TestCommitWithMultipleFiles(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := WriteFile(dir, "a.txt", "Hello")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "b.txt", "World")
+	require.NoError(t, err)
+
+	_, err = WriteFile(dir, "a.txt", "Hola")
+	require.NoError(t, err)
+
+	err = Add(dir, "a.txt")
+	require.NoError(t, err)
+
+	_, err = CommitChanges(dir, "first commit")
+	require.NoError(t, err)
+
+	aContent, err := ReadFile(dir, "a.txt")
+	require.NoError(t, err)
+
+	bContent, err := ReadFile(dir, "b.txt")
+	require.NoError(t, err)
+
+	require.Equal(t, "Hola", string(aContent), "expected a.txt to have latest content in working tree")
+	require.Equal(t, "World", string(bContent), "expected b.txt to have latest content in working tree")
 }
 
 func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
