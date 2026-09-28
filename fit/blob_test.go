@@ -3,7 +3,6 @@ package fit
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,7 +11,7 @@ func TestBlobIDIsSHA256OfContent(t *testing.T) {
 
 	want := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
 
-	assert.Equal(t, want, string(got), "BlobID should be the SHA256 hash of the content")
+	require.Equal(t, want, string(got), "BlobID should be the SHA256 hash of the content")
 }
 
 func TestBlobIDIsDeterministic(t *testing.T) {
@@ -21,7 +20,7 @@ func TestBlobIDIsDeterministic(t *testing.T) {
 	blobID1 := NewBlobID(content)
 	blobID2 := NewBlobID(content)
 
-	assert.Equal(t, blobID1, blobID2, "BlobID should be deterministic for the same content")
+	require.Equal(t, blobID1, blobID2, "BlobID should be deterministic for the same content")
 }
 
 func TestDifferentASCIICaseProducesDifferentBlobIDs(t *testing.T) {
@@ -31,7 +30,7 @@ func TestDifferentASCIICaseProducesDifferentBlobIDs(t *testing.T) {
 	blobID1 := NewBlobID(content1)
 	blobID2 := NewBlobID(content2)
 
-	assert.NotEqual(t, blobID1, blobID2, "Different ASCII case should produce different BlobIDs")
+	require.NotEqual(t, blobID1, blobID2, "Different ASCII case should produce different BlobIDs")
 }
 
 func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
@@ -41,7 +40,7 @@ func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 	blobID1 := NewBlobID(content1)
 	blobID2 := NewBlobID(content2)
 
-	assert.NotEqual(t, blobID1, blobID2, "Different content should produce different BlobIDs")
+	require.NotEqual(t, blobID1, blobID2, "Different content should produce different BlobIDs")
 }
 
 func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
@@ -58,7 +57,7 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = store.Get(id)
-	assert.Error(t, err, "Get should return an error if the content does not match its ID")
+	require.Error(t, err, "Get should return an error if the content does not match its ID")
 }
 
 func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
@@ -81,13 +80,13 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	id2, err := store.Put(initialContent)
 	require.NoError(t, err)
 
-	assert.Equal(t, id, id2, "Put should return the same ID for the same content")
+	require.Equal(t, id, id2, "Put should return the same ID for the same content")
 
 	// get the blob and check that it is still "hello"
 	content, err := store.Get(id)
 	require.NoError(t, err)
 
-	assert.Equal(t, initialContent, content, "Get should return the original content")
+	require.Equal(t, initialContent, content, "Get should return the original content")
 }
 
 func TestGetNonExistentBlobReturnsError(t *testing.T) {
@@ -98,7 +97,7 @@ func TestGetNonExistentBlobReturnsError(t *testing.T) {
 	store := NewBlobStore(dir)
 
 	_, err := store.Get("nonexistent")
-	assert.Error(t, err, "Get should return an error for a non-existent blob")
+	require.Error(t, err, "Get should return an error for a non-existent blob")
 }
 
 func TestStagedBlobReturnsErrorForStagedDeletion(t *testing.T) {
@@ -118,5 +117,5 @@ func TestStagedBlobReturnsErrorForStagedDeletion(t *testing.T) {
 
 	_, err = StagedBlob(dir, "a.txt")
 
-	assert.Error(t, err, "StagedBlob should return an error for a staged deletion")
+	require.Error(t, err, "StagedBlob should return an error for a staged deletion")
 }

@@ -3,7 +3,6 @@ package fit
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,7 +56,7 @@ func TestRmAfterAdd(t *testing.T) {
 	content, err := ReadFile(dir, "test.txt")
 	require.NoError(t, err)
 
-	assert.Equal(t, "Hello, World!", string(content))
+	require.Equal(t, "Hello, World!", string(content))
 }
 
 func TestAddAfterRm(t *testing.T) {
@@ -100,7 +99,7 @@ func TestRmModifiedFile(t *testing.T) {
 	content, err := ReadFile(dir, "test.txt")
 	require.NoError(t, err)
 
-	assert.Equal(t, "Modified content", string(content))
+	require.Equal(t, "Modified content", string(content))
 }
 
 func TestRmTwice(t *testing.T) {
@@ -145,7 +144,7 @@ func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 	content, err := ReadFile(dir, "test.txt")
 	require.NoError(t, err)
 
-	assert.Equal(t, "Hola", string(content))
+	require.Equal(t, "Hola", string(content))
 
 	// second rm: remove from working tree
 	err = Rm(dir, "test.txt")
