@@ -181,6 +181,26 @@ func NewCommitID(commit Commit) CommitID {
 	return CommitID(encoded)
 }
 
+func CurrentCommit(dir string) (Commit, error) {
+	headID, err := ReadHEAD(dir)
+	if err != nil {
+		return Commit{}, err
+	}
+
+	if headID == "" {
+		return Commit{}, nil
+	}
+
+	store := NewCommitStore(dir)
+
+	commit, err := store.Get(headID)
+	if err != nil {
+		return Commit{}, err
+	}
+
+	return commit, nil
+}
+
 type CommitStore interface {
 	Put(commit Commit) (CommitID, error)
 	Get(id CommitID) (Commit, error)
