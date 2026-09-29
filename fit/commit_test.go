@@ -581,20 +581,20 @@ func TestCommitWithNAncestors(t *testing.T) {
 	id3, err := CommitChanges(dir, "third commit")
 	require.NoError(t, err)
 
-	id1AncestorID3, err := IsParent(dir, id3, id1)
+	ok, err := IsAncestor(dir, id3, id1)
 	require.NoError(t, err)
 
-	require.True(t, id1AncestorID3, "expected first commit to be an ancestor of the third commit")
+	require.True(t, ok, "expected first commit to be an ancestor of the third commit")
 
-	id2AncestorID3, err := IsParent(dir, id3, id2)
+	ok, err = IsAncestor(dir, id3, id2)
 	require.NoError(t, err)
 
-	require.True(t, id2AncestorID3, "expected second commit to be an ancestor of the third commit")
+	require.True(t, ok, "expected second commit to be an ancestor of the third commit")
 
-	id3AncestorID1, err := IsParent(dir, id1, id3)
+	ok, err = IsAncestor(dir, id1, id3)
 	require.NoError(t, err)
 
-	require.False(t, id3AncestorID1, "expected third commit not to be an ancestor of the first commit")
+	require.False(t, ok, "expected third commit not to be an ancestor of the first commit")
 }
 
 func TestSecondCommitKeepsFilesFromParent(t *testing.T) {

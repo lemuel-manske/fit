@@ -212,47 +212,40 @@ func UnderFitDir(dir string, path string) bool {
 	return strings.HasPrefix(absPath, absFitPath)
 }
 
-func IsParent(dir string, source CommitID, target CommitID) (bool, error) {
+func IsAncestor(dir string, descendant, ancestor CommitID) (bool, error) {
+	if ancestor == descendant {
+		return true, nil
+	}
+
 	store := NewCommitStore(dir)
 
-	visited := make(map[CommitID]struct{})
+	visited := map[CommitID]bool{}
+	stack := []CommitID{descendant}
 
-	var walk func(CommitID) (bool, error)
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
 
-	walk = func(id CommitID) (bool, error) {
-		if id == target {
-			return true, nil
+		if visited[current] {
+			continue
 		}
+		visited[current] = true
 
-		if _, ok := visited[id]; ok {
-			return false, nil
-		}
-		visited[id] = struct{}{}
-
-		if IsEmpty(string(id)) {
-			return false, nil
-		}
-
-		commit, err := store.Get(id)
+		commit, err := store.Get(current)
 		if err != nil {
 			return false, err
 		}
 
-		for _, parentID := range commit.Parents {
-			found, err := walk(parentID)
-			if err != nil {
-				return false, err
-			}
-
-			if found {
+		for _, parent := range commit.Parents {
+			if parent == ancestor {
 				return true, nil
 			}
-		}
 
-		return false, nil
+			stack = append(stack, parent)
+		}
 	}
 
-	return walk(source)
+	return false, nil
 }
 
 func NewCommitID(commit Commit) CommitID {
@@ -291,16 +284,16 @@ func (s *FsCommitStore) Put(commit Commit) (CommitID, error) {
 	dir := MakePath(s.dir, CommitsDir)
 
 	for path := range commit.Files {
-			err := ValidateRepoPath(path)
+		err := ValidateRepoPath(path)
 
-			if err != nil {
-				return "", fmt.Errorf(
-					"%s: invalid path %q: %w",
-					ErrCorruptedCommit,
-					path,
-					err,
-				)
-			}
+		if err != nil {
+			return "", fmt.Errorf(
+				"%s: invalid path %q: %w",
+				ErrCorruptedCommit,
+				path,
+				err,
+			)
+		}
 	}
 
 	id := NewCommitID(commit)
