@@ -1,7 +1,9 @@
-package fit
+package cmd
 
 import (
 	"testing"
+
+	"fit/fit/utils"
 
 	"github.com/stretchr/testify/require"
 )
@@ -29,13 +31,13 @@ func TestRmUntrackedFile(t *testing.T) {
 
 	Init(dir, "test-repo")
 
-	_, err := WriteFile(dir, "untracked.txt", "I am untracked")
+	_, err := utils.WriteFile(dir, "untracked.txt", "I am untracked")
 	require.NoError(t, err)
 
 	err = Rm(dir, "untracked.txt")
 	require.NoError(t, err)
 
-	_, err = ReadFile(dir, "untracked.txt")
+	_, err = utils.ReadFile(dir, "untracked.txt")
 	require.Error(t, err)
 }
 
@@ -44,7 +46,7 @@ func TestRmAfterAdd(t *testing.T) {
 
 	Init(dir, "test-repo")
 
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
@@ -53,7 +55,7 @@ func TestRmAfterAdd(t *testing.T) {
 	err = Rm(dir, "test.txt")
 	require.NoError(t, err)
 
-	content, err := ReadFile(dir, "test.txt")
+	content, err := utils.ReadFile(dir, "test.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello, World!", string(content))
@@ -64,7 +66,7 @@ func TestAddAfterRm(t *testing.T) {
 
 	Init(dir, "test-repo")
 
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
@@ -82,21 +84,21 @@ func TestRmModifiedFile(t *testing.T) {
 
 	Init(dir, "test-repo")
 
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
 	require.NoError(t, err)
 
 	// modify the file after adding
-	_, err = WriteFile(dir, "test.txt", "Modified content")
+	_, err = utils.WriteFile(dir, "test.txt", "Modified content")
 	require.NoError(t, err)
 
 	err = Rm(dir, "test.txt")
 	require.NoError(t, err)
 
 	// the file should still exist on disk with modified content
-	content, err := ReadFile(dir, "test.txt")
+	content, err := utils.ReadFile(dir, "test.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Modified content", string(content))
@@ -107,20 +109,20 @@ func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 
 	Init(dir, "test-repo")
 
-	_, err := WriteFile(dir, "test.txt", "Hello")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "test.txt", "Hola")
+	_, err = utils.WriteFile(dir, "test.txt", "Hola")
 	require.NoError(t, err)
 
 	// first rm: remove from index only
 	err = Rm(dir, "test.txt")
 	require.NoError(t, err)
 
-	content, err := ReadFile(dir, "test.txt")
+	content, err := utils.ReadFile(dir, "test.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hola", string(content))
@@ -129,6 +131,6 @@ func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 	err = Rm(dir, "test.txt")
 	require.NoError(t, err)
 
-	_, err = ReadFile(dir, "test.txt")
+	_, err = utils.ReadFile(dir, "test.txt")
 	require.Error(t, err)
 }

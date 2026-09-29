@@ -1,7 +1,10 @@
-package fit
+package cmd
 
 import (
 	"testing"
+
+	"fit/fit/internal"
+	"fit/fit/utils"
 
 	"github.com/stretchr/testify/require"
 )
@@ -29,16 +32,16 @@ func TestUpdateFileBlobStaysSame(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
 	require.NoError(t, err)
 
 	// update the file content
-	WriteFile(dir, "test.txt", "Goodbye, World!")
+	utils.WriteFile(dir, "test.txt", "Goodbye, World!")
 
-	staged, err := StagedBlob(dir, "test.txt")
+	staged, err := internal.StagedBlob(dir, "test.txt")
 	require.NoError(t, err)
 
 	// the staged blob should still be the original content
@@ -50,7 +53,7 @@ func TestAddSameFileTwice(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
@@ -59,7 +62,7 @@ func TestAddSameFileTwice(t *testing.T) {
 	err = Add(dir, "test.txt")
 	require.NoError(t, err)
 
-	staged, err := StagedBlob(dir, "test.txt")
+	staged, err := internal.StagedBlob(dir, "test.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello, World!", string(staged))
@@ -70,16 +73,16 @@ func TestAddFile(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "test.txt")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "test.txt", "Goodbye, World!")
+	_, err = utils.WriteFile(dir, "test.txt", "Goodbye, World!")
 	require.NoError(t, err)
 
-	staged, err := StagedBlob(dir, "test.txt")
+	staged, err := internal.StagedBlob(dir, "test.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello, World!", string(staged))
@@ -90,13 +93,13 @@ func TestAddDeepFile(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "subdir", "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "subdir", "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "subdir/test.txt")
 	require.NoError(t, err)
 
-	staged, err := StagedBlob(dir, "subdir/test.txt")
+	staged, err := internal.StagedBlob(dir, "subdir/test.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello, World!", string(staged))
@@ -107,13 +110,13 @@ func TestAddVeryDeepFile(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "subdir", "subdir2", "subdir3", "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "subdir", "subdir2", "subdir3", "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "subdir/subdir2/subdir3/test.txt")
 	require.NoError(t, err)
 
-	staged, err := StagedBlob(dir, "subdir/subdir2/subdir3/test.txt")
+	staged, err := internal.StagedBlob(dir, "subdir/subdir2/subdir3/test.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello, World!", string(staged))
@@ -124,20 +127,20 @@ func TestAddDir(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "subdir", "test1.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "subdir", "test1.txt", "Hello, World!")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "subdir", "test2.txt", "Goodbye, World!")
+	_, err = utils.WriteFile(dir, "subdir", "test2.txt", "Goodbye, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "subdir")
 	require.NoError(t, err)
 
-	staged1, err := StagedBlob(dir, "subdir/test1.txt")
+	staged1, err := internal.StagedBlob(dir, "subdir/test1.txt")
 	require.NoError(t, err)
 	require.Equal(t, "Hello, World!", string(staged1))
 
-	staged2, err := StagedBlob(dir, "subdir/test2.txt")
+	staged2, err := internal.StagedBlob(dir, "subdir/test2.txt")
 	require.NoError(t, err)
 	require.Equal(t, "Goodbye, World!", string(staged2))
 }
@@ -147,7 +150,7 @@ func TestAddRejectsPathOutsideRepo(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "..", "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "..", "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, "../test.txt")
@@ -159,7 +162,7 @@ func TestAddRejectsAbsolutePath(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	absPath := dir + "/test.txt"
@@ -173,7 +176,7 @@ func TestAddRejectsPathUnderFitDir(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, ".fit", "test.txt", "Hello, World!")
+	_, err := utils.WriteFile(dir, ".fit", "test.txt", "Hello, World!")
 	require.NoError(t, err)
 
 	err = Add(dir, ".fit/test.txt")

@@ -1,21 +1,36 @@
-package fit
+package cmd
+
+import (
+	"os"
+
+	"fit/fit/internal"
+
+	"path/filepath"
+)
 
 // Add adds a file or directory to the index.
 // If the path is a directory, it recursively adds all files in that directory.
 func Add(dir string, path string) error {
-	err := ValidateRepoPath(path)
+	err := internal.ValidateRepoPath(path)
 	if err != nil {
 		return err
 	}
 
-	if IsDir(dir, path) {
-		files, err := ListFiles(dir, path)
+	absPath := filepath.Join(dir, path)
+
+	info, err := os.Stat(absPath)
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		files, err := os.ReadDir(absPath)
 		if err != nil {
 			return err
 		}
 
 		for _, file := range files {
-			err := Add(dir, file)
+			err := Add(dir, filepath.Join(path, file.Name()))
 			if err != nil {
 				return err
 			}
@@ -24,28 +39,28 @@ func Add(dir string, path string) error {
 		return nil
 	}
 
-	fileContent, err := ReadFile(dir, path)
+	fileContent, err := os.ReadFile(absPath)
 	if err != nil {
 		return err
 	}
 
-	blobs := NewBlobStore(dir)
+	blobs := internal.NewBlobStore(dir)
 
 	blobID, err := blobs.Put(fileContent)
 	if err != nil {
 		return err
 	}
 
-	index, err := LoadIndex(dir)
+	index, err := internal.LoadIndex(dir)
 	if err != nil {
 		return err
 	}
 
-	index.Entries[path] = IndexEntry{
+	index.Entries[path] = internal.IndexEntry{
 		Blob: string(blobID),
 	}
 
-	err = WriteIndex(dir, index)
+	err = internal.WriteIndex(dir, index)
 	if err != nil {
 		return err
 	}

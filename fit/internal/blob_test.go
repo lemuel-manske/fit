@@ -1,13 +1,16 @@
-package fit
+package internal_test
 
 import (
 	"testing"
+
+	"fit/fit/internal"
+	"fit/fit/utils"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestBlobIDIsSHA256OfContent(t *testing.T) {
-	got := NewBlobID([]byte("hello"))
+	got := internal.NewBlobID([]byte("hello"))
 
 	want := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
 
@@ -17,8 +20,8 @@ func TestBlobIDIsSHA256OfContent(t *testing.T) {
 func TestBlobIDIsDeterministic(t *testing.T) {
 	content := []byte("hello")
 
-	blobID1 := NewBlobID(content)
-	blobID2 := NewBlobID(content)
+	blobID1 := internal.NewBlobID(content)
+	blobID2 := internal.NewBlobID(content)
 
 	require.Equal(t, blobID1, blobID2, "BlobID should be deterministic for the same content")
 }
@@ -27,8 +30,8 @@ func TestDifferentCaseProducesDifferentBlobIDs(t *testing.T) {
 	content1 := []byte("a")
 	content2 := []byte("A")
 
-	blobID1 := NewBlobID(content1)
-	blobID2 := NewBlobID(content2)
+	blobID1 := internal.NewBlobID(content1)
+	blobID2 := internal.NewBlobID(content2)
 
 	require.NotEqual(t, blobID1, blobID2, "Different ASCII case should produce different BlobIDs")
 }
@@ -37,8 +40,8 @@ func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 	content1 := []byte("hello")
 	content2 := []byte("world")
 
-	blobID1 := NewBlobID(content1)
-	blobID2 := NewBlobID(content2)
+	blobID1 := internal.NewBlobID(content1)
+	blobID2 := internal.NewBlobID(content2)
 
 	require.NotEqual(t, blobID1, blobID2, "Different content should produce different BlobIDs")
 }
@@ -46,14 +49,14 @@ func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	dir := t.TempDir()
 
-	InitBlobStore(dir)
+	internal.InitBlobStore(dir)
 
-	store := NewBlobStore(dir)
+	store := internal.NewBlobStore(dir)
 
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
 
-	err = CorruptBlob(dir, id, "world")
+	err = utils.CorruptBlob(dir, id, "world")
 	require.NoError(t, err)
 
 	_, err = store.Get(id)
@@ -63,9 +66,9 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	dir := t.TempDir()
 
-	InitBlobStore(dir)
+	internal.InitBlobStore(dir)
 
-	store := NewBlobStore(dir)
+	store := internal.NewBlobStore(dir)
 
 	initialContent := []byte("hello")
 
@@ -88,30 +91,10 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 func TestGetNonExistentBlobReturnsError(t *testing.T) {
 	dir := t.TempDir()
 
-	InitBlobStore(dir)
+	internal.InitBlobStore(dir)
 
-	store := NewBlobStore(dir)
+	store := internal.NewBlobStore(dir)
 
 	_, err := store.Get("nonexistent")
 	require.Error(t, err, "Get should return an error for a non-existent blob")
-}
-
-func TestStagedBlobReturnsErrorForStagedDeletion(t *testing.T) {
-	dir := t.TempDir()
-
-	entries := make(map[string]IndexEntry)
-	entries["a.txt"] = IndexEntry{
-		Delete: true,
-	}
-
-	index := &Index{
-		Entries: entries,
-	}
-
-	err := WriteIndex(dir, index)
-	require.NoError(t, err)
-
-	_, err = StagedBlob(dir, "a.txt")
-
-	require.Error(t, err, "StagedBlob should return an error for a staged deletion")
 }

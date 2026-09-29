@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	fit_cmd "fit/fit/cmd"
+
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -26,76 +28,76 @@ func Execute(cmd *cobra.Command) {
 
 func NewRootCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "fit",
+		Use: "fit",
 	}
 }
 
 func NewInitCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "init",
+		Use: "init",
 
 		Args: cobra.ExactArgs(0),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDir()
+			currDir, err := os.Getwd()
 			if err != nil {
 				return err
 			}
 
 			repositoryName := strings.TrimSuffix(filepath.Base(currDir), filepath.Ext(currDir))
 
-			return Init(currDir, repositoryName)
+			return fit_cmd.Init(currDir, repositoryName)
 		},
 	}
 }
 
 func NewAddCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "add",
+		Use: "add",
 
 		Args: cobra.ExactArgs(1),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDir()
+			currDir, err := os.Getwd()
 			if err != nil {
 				return err
 			}
 
-			return Add(currDir, args[0])
+			return fit_cmd.Add(currDir, args[0])
 		},
 	}
 }
 
 func NewRmCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "rm",
+		Use: "rm",
 
 		Args: cobra.ExactArgs(1),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDir()
+			currDir, err := os.Getwd()
 			if err != nil {
 				return err
 			}
 
-			return Rm(currDir, args[0])
+			return fit_cmd.Rm(currDir, args[0])
 		},
 	}
 }
 
 func NewCommitCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "commit",
+		Use: "commit",
 
 		Args: cobra.ExactArgs(1),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currDir, err := GetCurrentDir()
+			currDir, err := os.Getwd()
 			if err != nil {
 				return err
 			}
 
-			commitID, err := CommitChanges(currDir, args[0])
+			commitID, err := fit_cmd.CommitChanges(currDir, args[0])
 
 			if err != nil {
 				return err

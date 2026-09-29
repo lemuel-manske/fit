@@ -1,8 +1,11 @@
-package fit
+package cmd
 
 import (
 	"testing"
 
+	"fit/fit/internal"
+
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,15 +15,18 @@ func TestInitCreatesInitialConfigurationFile(t *testing.T) {
 	err := Init(dir, "My repository")
 	require.NoError(t, err)
 
-	config, err := LoadConfig(dir)
+	config, err := internal.LoadConfig(dir)
 	require.NoError(t, err)
 
 	require.Equal(t, "My repository", config.RepositoryName)
 
-	require.True(t, IsUUID(string(config.PeerID)))
-	require.True(t, IsUUID(string(config.RepositoryID)))
+	_, err = uuid.Parse(string(config.PeerID))
+	require.NoError(t, err)
 
-	require.Equal(t, FormatVersion, config.FormatVersion)
+	_, err = uuid.Parse(string(config.RepositoryID))
+	require.NoError(t, err)
+
+	require.Equal(t, internal.FormatVersion, config.FormatVersion)
 }
 
 func TestInitCreatesInitialIndexFile(t *testing.T) {
@@ -29,7 +35,7 @@ func TestInitCreatesInitialIndexFile(t *testing.T) {
 	err := Init(dir, "My repository")
 	require.NoError(t, err)
 
-	index, err := LoadIndex(dir)
+	index, err := internal.LoadIndex(dir)
 	require.NoError(t, err)
 
 	require.Equal(t, 0, len(index.Entries))

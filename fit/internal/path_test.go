@@ -1,4 +1,4 @@
-package fit
+package internal
 
 import (
 	"testing"

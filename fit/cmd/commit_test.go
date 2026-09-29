@@ -1,229 +1,232 @@
-package fit
+package cmd
 
 import (
 	"testing"
+
+	"fit/fit/internal"
+	"fit/fit/utils"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestSameCommitProducesSameID(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	require.Equal(t, NewCommitID(a), NewCommitID(b))
+	require.Equal(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestCommitIDIgnoresFileOrder(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"b.txt": "bbb",
 			"a.txt": "aaa",
 		},
 	}
 
-	require.Equal(t, NewCommitID(a), NewCommitID(b))
+	require.Equal(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestChangingCommitMessageChangesID(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "second",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	require.NotEqual(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestChangingCommitFilesChangesID(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "ccc", // changed content
 		},
 	}
 
-	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	require.NotEqual(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestChangingCommitRepositoryIDChangesID(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		RepositoryID: "repo1",
 		Message:      "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		RepositoryID: "repo2", // changed repository ID
 		Message:      "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	require.NotEqual(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestChangingCommitParentsChangesID(t *testing.T) {
-	a := Commit{
-		Parents: []CommitID{"parent1"},
+	a := internal.Commit{
+		Parents: []internal.CommitID{"parent1"},
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
-		Parents: []CommitID{"parent2"}, // changed parent
+	b := internal.Commit{
+		Parents: []internal.CommitID{"parent2"}, // changed parent
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	require.NotEqual(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestCommitIDIgnoresExistingID(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		ID:      "existing-id",
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	require.Equal(t, NewCommitID(a), NewCommitID(b))
+	require.Equal(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestChangingMessageChangesCommitID(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "second", // changed message
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	require.NotEqual(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestChangingFileBlobChangesCommitID(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "ccc", // changed blob
 		},
 	}
 
-	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	require.NotEqual(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestCommitIDChangesWithContent(t *testing.T) {
-	a := Commit{
+	a := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "bbb",
 		},
 	}
 
-	b := Commit{
+	b := internal.Commit{
 		Message: "first",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "aaa",
 			"b.txt": "ccc", // changed content
 		},
 	}
 
-	require.NotEqual(t, NewCommitID(a), NewCommitID(b))
+	require.NotEqual(t, internal.NewCommitID(a), internal.NewCommitID(b))
 }
 
 func TestPutAndGetCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
+	internal.InitCommitStore(dir)
 
-	commit := Commit{
+	commit := internal.Commit{
 		Message: "first commit",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "abc123",
 		},
 	}
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	id, err := store.Put(commit)
 	require.NoError(t, err)
@@ -238,15 +241,15 @@ func TestPutAndGetCommit(t *testing.T) {
 func TestCommitStoreRejectsUnsafeManifestPath(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
+	internal.InitCommitStore(dir)
 
-	commit := Commit{
-		Files: map[string]Hash{
+	commit := internal.Commit{
+		Files: map[string]internal.Hash{
 			"../outside.txt": "abc",
 		},
 	}
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	_, err := store.Put(commit)
 
@@ -256,21 +259,21 @@ func TestCommitStoreRejectsUnsafeManifestPath(t *testing.T) {
 func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
+	internal.InitCommitStore(dir)
 
-	commit := Commit{
+	commit := internal.Commit{
 		Message: "first commit",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "abc123",
 		},
 	}
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	id, err := store.Put(commit)
 	require.NoError(t, err)
 
-	err = CorruptCommit(dir, id, "corrupted commit")
+	err = utils.CorruptCommit(dir, id, "corrupted commit")
 	require.NoError(t, err)
 
 	_, err = store.Get(id)
@@ -281,16 +284,16 @@ func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 func TestPutCommitTwiceProducesSameID(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
+	internal.InitCommitStore(dir)
 
-	commit := Commit{
+	commit := internal.Commit{
 		Message: "first commit",
-		Files: map[string]Hash{
+		Files: map[string]internal.Hash{
 			"a.txt": "abc123",
 		},
 	}
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	id1, err := store.Put(commit)
 	require.NoError(t, err)
@@ -304,9 +307,9 @@ func TestPutCommitTwiceProducesSameID(t *testing.T) {
 func TestGetNonExistentCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
+	internal.InitCommitStore(dir)
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	_, err := store.Get("nonexistent-id")
 
@@ -318,19 +321,19 @@ func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "a.txt", "Hola")
+	_, err = utils.WriteFile(dir, "a.txt", "Hola")
 	require.NoError(t, err)
 
 	_, err = CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	content, err := ReadFile(dir, "a.txt")
+	content, err := utils.ReadFile(dir, "a.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hola", string(content))
@@ -341,7 +344,7 @@ func TestFirstCommitMovesHEAD(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -350,7 +353,7 @@ func TestFirstCommitMovesHEAD(t *testing.T) {
 	id1, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	headID, err := ReadHEAD(dir)
+	headID, err := internal.ReadHEAD(dir)
 	require.NoError(t, err)
 
 	require.Equal(t, id1, headID)
@@ -361,7 +364,7 @@ func TestSecondCommitMovesHEAD(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -370,7 +373,7 @@ func TestSecondCommitMovesHEAD(t *testing.T) {
 	id1, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "b.txt", "World")
+	_, err = utils.WriteFile(dir, "b.txt", "World")
 	require.NoError(t, err)
 
 	err = Add(dir, "b.txt")
@@ -379,7 +382,7 @@ func TestSecondCommitMovesHEAD(t *testing.T) {
 	id2, err := CommitChanges(dir, "second commit")
 	require.NoError(t, err)
 
-	headID, err := ReadHEAD(dir)
+	headID, err := internal.ReadHEAD(dir)
 	require.NoError(t, err)
 
 	require.Equal(t, id2, headID)
@@ -391,7 +394,7 @@ func TestFirstCommitContainsStagedFiles(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -400,12 +403,12 @@ func TestFirstCommitContainsStagedFiles(t *testing.T) {
 	id, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	commit, err := store.Get(id)
 	require.NoError(t, err)
 
-	hash := NewBlobID([]byte("Hello"))
+	hash := internal.NewBlobID([]byte("Hello"))
 
 	require.Equal(t, hash, commit.Files["a.txt"])
 }
@@ -415,7 +418,7 @@ func TestCommitClearsIndex(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -424,7 +427,7 @@ func TestCommitClearsIndex(t *testing.T) {
 	_, err = CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	index, err := LoadIndex(dir)
+	index, err := internal.LoadIndex(dir)
 	require.NoError(t, err)
 
 	require.Equal(t, 0, len(index.Entries), "Expected index to be cleared after commit")
@@ -436,7 +439,7 @@ func TestRmAfterCommit(t *testing.T) {
 	err := Init(dir, "test")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "a.txt", "Hello")
+	_, err = utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -448,7 +451,7 @@ func TestRmAfterCommit(t *testing.T) {
 	err = Rm(dir, "a.txt")
 	require.NoError(t, err)
 
-	index, err := LoadIndex(dir)
+	index, err := internal.LoadIndex(dir)
 	require.NoError(t, err)
 
 	entry, ok := index.Entries["a.txt"]
@@ -456,7 +459,7 @@ func TestRmAfterCommit(t *testing.T) {
 
 	require.True(t, entry.Delete, "expected a.txt to be staged for deletion")
 
-	_, err = ReadFile(dir, "a.txt")
+	_, err = utils.ReadFile(dir, "a.txt")
 	require.Error(t, err, "expected a.txt to be removed from working tree")
 }
 
@@ -465,13 +468,13 @@ func TestCommitWithMultipleFiles(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "b.txt", "World")
+	_, err = utils.WriteFile(dir, "b.txt", "World")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "a.txt", "Hola")
+	_, err = utils.WriteFile(dir, "a.txt", "Hola")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -480,10 +483,10 @@ func TestCommitWithMultipleFiles(t *testing.T) {
 	_, err = CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	aContent, err := ReadFile(dir, "a.txt")
+	aContent, err := utils.ReadFile(dir, "a.txt")
 	require.NoError(t, err)
 
-	bContent, err := ReadFile(dir, "b.txt")
+	bContent, err := utils.ReadFile(dir, "b.txt")
 	require.NoError(t, err)
 
 	require.Equal(t, "Hola", string(aContent), "expected a.txt to have latest content in working tree")
@@ -495,24 +498,24 @@ func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "a.txt", "Hola")
+	_, err = utils.WriteFile(dir, "a.txt", "Hola")
 	require.NoError(t, err)
 
 	id, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	commit, err := store.Get(id)
 	require.NoError(t, err)
 
-	hash := NewBlobID([]byte("Hello"))
+	hash := internal.NewBlobID([]byte("Hello"))
 
 	require.Equal(t, hash, commit.Files["a.txt"])
 }
@@ -522,7 +525,7 @@ func TestCommitKeepsParentCommits(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -531,7 +534,7 @@ func TestCommitKeepsParentCommits(t *testing.T) {
 	id1, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "b.txt", "World")
+	_, err = utils.WriteFile(dir, "b.txt", "World")
 	require.NoError(t, err)
 
 	err = Add(dir, "b.txt")
@@ -540,7 +543,7 @@ func TestCommitKeepsParentCommits(t *testing.T) {
 	id2, err := CommitChanges(dir, "second commit")
 	require.NoError(t, err)
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	commit2, err := store.Get(id2)
 	require.NoError(t, err)
@@ -554,7 +557,7 @@ func TestCommitWithNAncestors(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -563,7 +566,7 @@ func TestCommitWithNAncestors(t *testing.T) {
 	id1, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "b.txt", "World")
+	_, err = utils.WriteFile(dir, "b.txt", "World")
 	require.NoError(t, err)
 
 	err = Add(dir, "b.txt")
@@ -572,7 +575,7 @@ func TestCommitWithNAncestors(t *testing.T) {
 	id2, err := CommitChanges(dir, "second commit")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "c.txt", "!")
+	_, err = utils.WriteFile(dir, "c.txt", "!")
 	require.NoError(t, err)
 
 	err = Add(dir, "c.txt")
@@ -581,17 +584,17 @@ func TestCommitWithNAncestors(t *testing.T) {
 	id3, err := CommitChanges(dir, "third commit")
 	require.NoError(t, err)
 
-	ok, err := IsAncestor(dir, id3, id1)
+	ok, err := internal.IsAncestor(dir, id3, id1)
 	require.NoError(t, err)
 
 	require.True(t, ok, "expected first commit to be an ancestor of the third commit")
 
-	ok, err = IsAncestor(dir, id3, id2)
+	ok, err = internal.IsAncestor(dir, id3, id2)
 	require.NoError(t, err)
 
 	require.True(t, ok, "expected second commit to be an ancestor of the third commit")
 
-	ok, err = IsAncestor(dir, id1, id3)
+	ok, err = internal.IsAncestor(dir, id1, id3)
 	require.NoError(t, err)
 
 	require.False(t, ok, "expected third commit not to be an ancestor of the first commit")
@@ -602,7 +605,7 @@ func TestSecondCommitKeepsFilesFromParent(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -611,7 +614,7 @@ func TestSecondCommitKeepsFilesFromParent(t *testing.T) {
 	_, err = CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	_, err = WriteFile(dir, "b.txt", "World")
+	_, err = utils.WriteFile(dir, "b.txt", "World")
 	require.NoError(t, err)
 
 	err = Add(dir, "b.txt")
@@ -620,13 +623,13 @@ func TestSecondCommitKeepsFilesFromParent(t *testing.T) {
 	id2, err := CommitChanges(dir, "second commit")
 	require.NoError(t, err)
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	commit2, err := store.Get(id2)
 	require.NoError(t, err)
 
-	hashA := NewBlobID([]byte("Hello"))
-	hashB := NewBlobID([]byte("World"))
+	hashA := internal.NewBlobID([]byte("Hello"))
+	hashB := internal.NewBlobID([]byte("World"))
 
 	require.Equal(t, hashA, commit2.Files["a.txt"], "expected second commit to keep file from first commit")
 	require.Equal(t, hashB, commit2.Files["b.txt"], "expected second commit to have new file")
@@ -637,7 +640,7 @@ func TestFirstCommitHasNoParents(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -646,7 +649,7 @@ func TestFirstCommitHasNoParents(t *testing.T) {
 	id, err := CommitChanges(dir, "first commit")
 	require.NoError(t, err)
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	commit, err := store.Get(id)
 	require.NoError(t, err)
@@ -659,7 +662,7 @@ func TestCommitAppliesStagedDeletion(t *testing.T) {
 
 	Init(dir, "test")
 
-	_, err := WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -675,7 +678,7 @@ func TestCommitAppliesStagedDeletion(t *testing.T) {
 	id, err := CommitChanges(dir, "remove a")
 	require.NoError(t, err)
 
-	store := NewCommitStore(dir)
+	store := internal.NewCommitStore(dir)
 
 	commit, err := store.Get(id)
 	require.NoError(t, err)

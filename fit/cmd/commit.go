@@ -1,21 +1,25 @@
-package fit
+package cmd
 
-func CommitChanges(dir string, message string) (CommitID, error) {
-	store := NewCommitStore(dir)
+import (
+	"fit/fit/internal"
+)
 
-	index, err := LoadIndex(dir)
+func CommitChanges(dir string, message string) (internal.CommitID, error) {
+	store := internal.NewCommitStore(dir)
+
+	index, err := internal.LoadIndex(dir)
 	if err != nil {
 		return "", err
 	}
 
-	headID, err := ReadHEAD(dir)
+	headID, err := internal.ReadHEAD(dir)
 	if err != nil {
 		return "", err
 	}
 
-	files := make(map[string]Hash)
+	files := make(map[string]internal.Hash)
 
-	hasHEAD := !IsEmpty(string(headID))
+	hasHEAD := headID != ""
 
 	if hasHEAD {
 		parentCommit, err := store.Get(headID)
@@ -37,16 +41,16 @@ func CommitChanges(dir string, message string) (CommitID, error) {
 			continue
 		}
 
-		files[path] = Hash(entry.Blob)
+		files[path] = internal.Hash(entry.Blob)
 	}
 
-	parents := []CommitID{}
+	parents := []internal.CommitID{}
 
 	if hasHEAD {
 		parents = append(parents, headID)
 	}
 
-	commit := Commit{
+	commit := internal.Commit{
 		Parents: parents,
 		Message: message,
 		Files:   files,
@@ -57,14 +61,14 @@ func CommitChanges(dir string, message string) (CommitID, error) {
 		return "", err
 	}
 
-	err = WriteHEAD(dir, commitID)
+	err = internal.WriteHEAD(dir, commitID)
 	if err != nil {
 		return "", err
 	}
 
 	clear(index.Entries)
 
-	err = WriteIndex(dir, index)
+	err = internal.WriteIndex(dir, index)
 	if err != nil {
 		return "", err
 	}

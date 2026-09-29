@@ -1,16 +1,24 @@
-package fit
+package cmd
+
+import (
+	"os"
+
+	"fit/fit/internal"
+
+	"path/filepath"
+)
 
 // Checkout checks out the specified commit in the given directory.
-func Checkout(dir string, targetID CommitID) error {
-	commitStore := NewCommitStore(dir)
-	blobStore := NewBlobStore(dir)
+func Checkout(dir string, targetID internal.CommitID) error {
+	commitStore := internal.NewCommitStore(dir)
+	blobStore := internal.NewBlobStore(dir)
 
 	target, err := commitStore.Get(targetID)
 	if err != nil {
 		return err
 	}
 
-	current, err := CurrentCommit(dir)
+	current, err := internal.CurrentCommit(dir)
 	if err != nil {
 		return err
 	}
@@ -29,8 +37,10 @@ func Checkout(dir string, targetID CommitID) error {
 
 	// 2. remove files that exist in the current HEAD but not in the target
 	for path := range current.Files {
+		absPath := filepath.Join(dir, path)
+
 		if _, exists := target.Files[path]; !exists {
-			if err := RemoveFile(dir, path); err != nil {
+			if err := os.Remove(absPath); err != nil {
 				return err
 			}
 		}
@@ -38,11 +48,13 @@ func Checkout(dir string, targetID CommitID) error {
 
 	// 3. write snapshot target
 	for path, content := range contents {
-		if _, err := WriteFile(dir, path, string(content)); err != nil {
+		absPath := filepath.Join(dir, path)
+
+		if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
 			return err
 		}
 	}
 
 	// 4. then move HEAD
-	return WriteHEAD(dir, targetID)
+	return internal.WriteHEAD(dir, targetID)
 }
