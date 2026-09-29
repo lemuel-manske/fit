@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	"fit/fit/utils"
+	utils "fit/fit/test_utils"
 
 	"github.com/stretchr/testify/require"
 )
