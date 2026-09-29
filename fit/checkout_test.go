@@ -20,7 +20,7 @@ func TestCheckout(t *testing.T) {
 	commitID, err := CommitChanges(dir, "Initial commit")
 	require.NoError(t, err)
 
-	// Modify the file after committing
+	// modify the file after committing
 	_, err = WriteFile(dir, "test.txt", "Goodbye, World!")
 	require.NoError(t, err)
 
@@ -70,14 +70,14 @@ func TestCheckoutKeepsUntrackedPostCommitFiles(t *testing.T) {
 	commitID, err := CommitChanges(dir, "Initial commit")
 	require.NoError(t, err)
 
-	// Create a new file after committing, and don't commit it
+	// create a new file after committing, and don't commit it
 	_, err = WriteFile(dir, "newfile.txt", "This is a new file.")
 	require.NoError(t, err)
 
 	err = Checkout(dir, commitID)
 	require.NoError(t, err)
 
-	// The new file should still exist after checkout
+	// the new file should still exist after checkout
 	_, err = ReadFile(dir, "newfile.txt")
 	require.NoError(t, err)
 }
@@ -96,7 +96,7 @@ func TestCheckoutRemovesTrackedPostCommitFiles(t *testing.T) {
 	commitID, err := CommitChanges(dir, "Initial commit")
 	require.NoError(t, err)
 
-	// Create a new file after committing, and commit it
+	// create a new file after committing, and commit it
 	_, err = WriteFile(dir, "newfile.txt", "This is a new file.")
 	require.NoError(t, err)
 
@@ -109,7 +109,7 @@ func TestCheckoutRemovesTrackedPostCommitFiles(t *testing.T) {
 	err = Checkout(dir, commitID)
 	require.NoError(t, err)
 
-	// The new file should be removed after checkout
+	// the new file should be removed after checkout
 	_, err = ReadFile(dir, "newfile.txt")
 	require.Error(t, err)
 }

@@ -102,27 +102,6 @@ func TestRmModifiedFile(t *testing.T) {
 	require.Equal(t, "Modified content", string(content))
 }
 
-func TestRmTwice(t *testing.T) {
-	dir := t.TempDir()
-
-	Init(dir, "test-repo")
-
-	_, err := WriteFile(dir, "test.txt", "Hello, World!")
-	require.NoError(t, err)
-
-	err = Add(dir, "test.txt")
-	require.NoError(t, err)
-
-	err = Rm(dir, "test.txt")
-	require.NoError(t, err)
-
-	err = Rm(dir, "test.txt")
-	require.NoError(t, err)
-
-	_, err = ReadFile(dir, "test.txt")
-	require.Error(t, err)
-}
-
 func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 

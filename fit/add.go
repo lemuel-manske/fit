@@ -8,13 +8,6 @@ func Add(dir string, path string) error {
 		return err
 	}
 
-	index, err := LoadIndex(dir)
-	if err != nil {
-		return err
-	}
-
-	store := NewBlobStore(dir)
-
 	if IsDir(dir, path) {
 		files, err := ListFiles(dir, path)
 		if err != nil {
@@ -36,7 +29,14 @@ func Add(dir string, path string) error {
 		return err
 	}
 
-	blobID, err := store.Put(fileContent)
+	blobs := NewBlobStore(dir)
+
+	blobID, err := blobs.Put(fileContent)
+	if err != nil {
+		return err
+	}
+
+	index, err := LoadIndex(dir)
 	if err != nil {
 		return err
 	}

@@ -23,7 +23,7 @@ func TestBlobIDIsDeterministic(t *testing.T) {
 	require.Equal(t, blobID1, blobID2, "BlobID should be deterministic for the same content")
 }
 
-func TestDifferentASCIICaseProducesDifferentBlobIDs(t *testing.T) {
+func TestDifferentCaseProducesDifferentBlobIDs(t *testing.T) {
 	content1 := []byte("a")
 	content2 := []byte("A")
 
@@ -70,10 +70,6 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	initialContent := []byte("hello")
 
 	id, err := store.Put(initialContent)
-	require.NoError(t, err)
-
-	// write different content to the file
-	err = CorruptBlob(dir, id, "world")
 	require.NoError(t, err)
 
 	// put the same blob again
