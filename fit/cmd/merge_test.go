@@ -158,6 +158,207 @@ func TestMergeFile(t *testing.T) {
 	}
 }
 
+func TestDiffNoChanges(t *testing.T) {
+	base := []string{"one", "two"}
+	target := []string{"one", "two"}
+
+	got := Diff(base, target)
+
+	expected := []Hunk{}
+
+	require.Equal(t, expected, got)
+}
+
+func TestDiffInsertion(t *testing.T) {
+	base := []string{"one"}
+	target := []string{"one", "two"}
+
+	got := Diff(base, target)
+
+	expected := []Hunk{
+		{
+			Start: 1,
+			End:   1,
+			Lines: []string{"two"},
+		},
+	}
+
+	require.Equal(t, expected, got)
+}
+
+func TestDiffDeletion(t *testing.T) {
+	base := []string{"one", "two"}
+	target := []string{"one"}
+
+	got := Diff(base, target)
+
+	expected := []Hunk{
+		{
+			Start: 1,
+			End:   2,
+			Lines: []string{},
+		},
+	}
+
+	require.Equal(t, expected, got)
+}
+
+func TestDiffSingleReplacement(t *testing.T) {
+	base := []string{"one", "two"}
+	target := []string{"one", "TWO"}
+
+	got := Diff(base, target)
+
+	expected := []Hunk{
+		{
+			Start: 1,
+			End:   2,
+			Lines: []string{"TWO"},
+		},
+	}
+
+	require.Equal(t, expected, got)
+}
+
+func TestDiffMultipleReplacements(t *testing.T) {
+	base := []string{"one", "two", "three"}
+	target := []string{"ONE", "TWO", "three"}
+
+	got := Diff(base, target)
+
+	expected := []Hunk{
+		{
+			Start: 0,
+			End:   2,
+			Lines: []string{"ONE", "TWO"},
+		},
+	}
+
+	require.Equal(t, expected, got)
+}
+
+func TestDiffIndependentChanges(t *testing.T) {
+	base := []string{"one", "two"}
+	target := []string{"ONE", "TWO"}
+
+	got := Diff(base, target)
+
+	expected := []Hunk{
+		{
+			Start: 0,
+			End:   2,
+			Lines: []string{"ONE", "TWO"},
+		},
+	}
+
+	require.Equal(t, expected, got)
+}
+
+func TestMergeTextIndependentChanges(t *testing.T) {
+	base := []byte("one\ntwo\n")
+	ours := []byte("ONE\ntwo\n")
+	theirs := []byte("one\nTWO\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{"ONE\n", "TWO\n"}
+
+	require.Equal(t, expected, got.Lines)
+}
+
+func TestMergeTextConflictingChanges(t *testing.T) {
+	base := []byte("one\ntwo\n")
+	ours := []byte("ONE\nTwo\n")
+	theirs := []byte("onE\nTWO\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{
+		"<<<<<<< ours",
+		"ONE\n",
+		"Two\n",
+		"=======",
+		"onE\n",
+		"TWO\n",
+		">>>>>>> theirs",
+	}
+
+	require.Equal(t, expected, got.Lines)
+	require.True(t, got.Conflict)
+}
+
+func TestMergeTextOursChanged(t *testing.T) {
+	base := []byte("one\ntwo\n")
+	ours := []byte("ONE\ntwo\n")
+	theirs := []byte("one\ntwo\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{"ONE\n", "two\n"}
+
+	require.Equal(t, expected, got.Lines)
+}
+
+func TestMergeTextTheirsChanged(t *testing.T) {
+	base := []byte("one\ntwo\n")
+	ours := []byte("one\ntwo\n")
+	theirs := []byte("one\nTWO\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{"one\n", "TWO\n"}
+
+	require.Equal(t, expected, got.Lines)
+}
+
+func TestMergeTextBothChangedToSameContent(t *testing.T) {
+	base := []byte("one\ntwo\n")
+	ours := []byte("ONE\ntwo\n")
+	theirs := []byte("ONE\ntwo\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{"ONE\n", "two\n"}
+
+	require.Equal(t, expected, got.Lines)
+}
+
+func TestMergeIndependentChanges(t *testing.T) {
+	base := []byte("one\ntwo\n")
+	ours := []byte("ONE\ntwo\n")
+	theirs := []byte("one\nTWO\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{"ONE\n", "TWO\n"}
+
+	require.Equal(t, expected, got.Lines)
+}
+
+func TestMergeCRLFChanges(t *testing.T) {
+	base := []byte("one\r\ntwo\r\n")
+	ours := []byte("ONE\r\ntwo\r\n")
+	theirs := []byte("one\r\nTWO\r\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{"ONE\r\n", "TWO\r\n"}
+
+	require.Equal(t, expected, got.Lines)
+}
+
+func TestMergeLFChanges(t *testing.T) {
+	base := []byte("one\ntwo\n")
+	ours := []byte("ONE\ntwo\n")
+	theirs := []byte("one\nTWO\n")
+
+	got := MergeText(base, ours, theirs)
+
+	expected := []string{"ONE\n", "TWO\n"}
+
+	require.Equal(t, expected, got.Lines)
+}
+
 func TestFastForwardMovesHeadAndWorkingTreeToDescendant(t *testing.T) {
 	dir := t.TempDir()
 
