@@ -155,7 +155,6 @@ func IsAncestor(dir string, descendant, ancestor CommitID) (bool, error) {
 	return false, nil
 }
 
-// Ancestor returns the closest common ancestor of the provided commits.
 func Ancestor(dir string, commits... CommitID) (CommitID, error) {
 	if len(commits) < 2 {
 		return "", fmt.Errorf("at least two commits are required to find a common ancestor")

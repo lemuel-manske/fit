@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"fit/fit/internal"
 
 	"github.com/google/uuid"
@@ -17,24 +15,40 @@ func Init(repoDir string, repoName string) error {
 		RepositoryName: repoName,
 	}
 
-	err := os.MkdirAll(internal.MakePath(repoDir, ""), 0755)
+	err := internal.WriteFitDir(repoDir)
 	if err != nil {
 		return err
 	}
 
-	internal.WriteConfig(repoDir, config)
+	err = internal.WriteConfig(repoDir, config)
+	if err != nil {
+		return err
+	}
 
 	index := &internal.Index{
 		Version: 0,
 		Entries: make(map[string]internal.IndexEntry),
 	}
 
-	internal.WriteIndex(repoDir, index)
+	err = internal.WriteIndex(repoDir, index)
+	if err != nil {
+		return err
+	}
 
-	internal.WriteHEAD(repoDir, "")
+	err = internal.WriteHEAD(repoDir, "")
+	if err != nil {
+		return err
+	}
 
-	internal.InitBlobStore(repoDir)
-	internal.InitCommitStore(repoDir)
+	err = internal.InitBlobStore(repoDir)
+	if err != nil {
+		return err
+	}
+
+	err = internal.InitCommitStore(repoDir)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
