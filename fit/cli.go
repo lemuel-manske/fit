@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	fit_cmd "fit/fit/cmd"
+	"fit/fit/internal"
 
 	"path/filepath"
 
@@ -14,8 +15,10 @@ import (
 
 func InitCLI(root *cobra.Command) {
 	root.AddCommand(NewAddCmd())
+	root.AddCommand(NewCheckoutCmd())
 	root.AddCommand(NewCommitCmd())
 	root.AddCommand(NewInitCmd())
+	root.AddCommand(NewMergeCmd())
 	root.AddCommand(NewRmCmd())
 }
 
@@ -105,6 +108,40 @@ func NewCommitCmd() *cobra.Command {
 
 			fmt.Println(commitID)
 			return nil
+		},
+	}
+}
+
+func NewMergeCmd() *cobra.Command {
+	return &cobra.Command{
+		Use: "merge",
+
+		Args: cobra.ExactArgs(1),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			currDir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			return fit_cmd.Merge(currDir, internal.CommitID(args[0]))
+		},
+	}
+}
+
+func NewCheckoutCmd() *cobra.Command {
+	return &cobra.Command{
+		Use: "checkout",
+
+		Args: cobra.ExactArgs(1),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			currDir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			return fit_cmd.Checkout(currDir, internal.CommitID(args[0]))
 		},
 	}
 }
