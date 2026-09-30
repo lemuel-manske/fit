@@ -155,6 +155,41 @@ func IsAncestor(dir string, descendant, ancestor CommitID) (bool, error) {
 	return false, nil
 }
 
+// Ancestor returns the closest common ancestor of the provided commits.
+func Ancestor(dir string, commits... CommitID) (CommitID, error) {
+	if len(commits) < 2 {
+		return "", fmt.Errorf("at least two commits are required to find a common ancestor")
+	}
+
+	visited := map[CommitID]int{}
+
+	store := NewCommitStore(dir)
+
+	for _, commitID := range commits {
+		stack := []CommitID{commitID}
+
+		for len(stack) > 0 {
+			current := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+
+			visited[current]++
+
+			if visited[current] == len(commits) {
+				return current, nil
+			}
+
+			commit, err := store.Get(current)
+			if err != nil {
+				return "", err
+			}
+
+			stack = append(stack, commit.Parents...)
+		}
+	}
+
+	return "", fmt.Errorf("no common ancestor found")
+}
+
 func CurrentCommit(dir string) (Commit, error) {
 	headID, err := ReadHEAD(dir)
 	if err != nil {

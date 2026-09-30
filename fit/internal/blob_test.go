@@ -56,7 +56,7 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	id, err := store.Put([]byte("hello"))
 	require.NoError(t, err)
 
-	err = utils.CorruptBlob(dir, id, "world")
+	err = corruptBlob(dir, id, "world")
 	require.NoError(t, err)
 
 	_, err = store.Get(id)
@@ -97,4 +97,15 @@ func TestGetNonExistentBlobReturnsError(t *testing.T) {
 
 	_, err := store.Get("nonexistent")
 	require.Error(t, err, "Get should return an error for a non-existent blob")
+}
+
+func corruptBlob(dir string, blobID internal.Hash, content string) error {
+	blobsDir := internal.BlobsPath(dir)
+
+	_, err := utils.WriteFile(blobsDir, string(blobID), content)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
