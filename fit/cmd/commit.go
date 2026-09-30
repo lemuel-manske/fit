@@ -48,6 +48,13 @@ func CommitChanges(dir string, message string) (internal.CommitID, error) {
 
 	if hasHEAD {
 		parents = append(parents, headID)
+
+		mergeHEAD, err := internal.ReadMergeHEAD(dir)
+		if err != nil {
+			// ignore error if mergeHEAD does not exist
+		} else if mergeHEAD != "" {
+			parents = append(parents, mergeHEAD)
+		}
 	}
 
 	commit := internal.Commit{

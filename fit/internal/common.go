@@ -11,11 +11,13 @@ const (
 
 	fitDir = ".fit"
 
-	blobsDir       = "blobs"
-	commitsDir     = "commits"
-	configFileName = "config.json"
-	HEADFileName   = "HEAD"
-	indexFileName  = "index.json"
+	HEADFileName      = "HEAD"
+	blobsDir          = "blobs"
+	commitsDir        = "commits"
+	configFileName    = "config.json"
+	indexFileName     = "index.json"
+	mergeHEADFileName = "MERGE_HEAD"
+	mergeBaseFileName = "MERGE_BASE"
 )
 
 type Hash string
@@ -53,6 +55,14 @@ func ConfigPath(dir string) string {
 
 func HEADPath(dir string) string {
 	return fitPath(dir, HEADFileName)
+}
+
+func MergeHEADPath(dir string) string {
+	return fitPath(dir, mergeHEADFileName)
+}
+
+func MergeBasePath(dir string) string {
+	return fitPath(dir, mergeBaseFileName)
 }
 
 func IndexPath(dir string) string {

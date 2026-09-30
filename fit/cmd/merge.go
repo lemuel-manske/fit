@@ -2,13 +2,18 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"slices"
+	"strings"
 
 	"fit/fit/internal"
+
+	"path/filepath"
 )
 
 const (
-	errNotAncestor = "target commit is not a descendant of the current HEAD"
+	errNotAncestor     = "target commit is not a descendant of the current HEAD"
+	errMergeInProgress = "merge in progress"
 )
 
 type Hunk struct {
@@ -40,6 +45,155 @@ type MergeDecision struct {
 type TextMergeResult struct {
 	Lines    []string
 	Conflict bool
+}
+
+func Merge(dir string, theirsID internal.CommitID) error {
+	currMergeHEAD, err := internal.ReadMergeHEAD(dir)
+	if err == nil {
+		err = fmt.Errorf(
+			"%s: %s is the current merge target",
+			errMergeInProgress,
+			currMergeHEAD,
+		)
+
+		return err
+	}
+
+	oursID, err := internal.ReadHEAD(dir)
+	if err != nil {
+		return err
+	}
+
+	baseID, err := internal.Ancestor(dir, oursID, theirsID)
+	if err != nil {
+		return err
+	}
+
+	store := internal.NewCommitStore(dir)
+
+	base, err := store.Get(baseID)
+	if err != nil {
+		return err
+	}
+
+	ours, err := store.Get(oursID)
+	if err != nil {
+		return err
+	}
+
+	theirs, err := store.Get(theirsID)
+	if err != nil {
+		return err
+	}
+
+	// Persist merge state before touching the working tree.
+	if err := internal.WriteMergeHEAD(dir, theirsID); err != nil {
+		return err
+	}
+
+	if err := internal.WriteMergeBase(dir, baseID); err != nil {
+		return err
+	}
+
+	paths := mergePaths(base.Files, ours.Files, theirs.Files)
+
+	blobStore := internal.NewBlobStore(dir)
+
+	for _, path := range paths {
+		baseHash := hashAt(base.Files, path)
+		oursHash := hashAt(ours.Files, path)
+		theirsHash := hashAt(theirs.Files, path)
+
+		decision := TakeMergeDecision(
+			baseHash,
+			oursHash,
+			theirsHash,
+		)
+
+		absPath := filepath.Join(dir, path)
+
+		switch {
+		case decision.Delete:
+			if err := os.Remove(absPath); err != nil {
+				return err
+			}
+
+		case decision.Blob != nil:
+			content, err := blobStore.Get(*decision.Blob)
+			if err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(absPath, content, 0644); err != nil {
+				return err
+			}
+
+		case decision.Conflict:
+			base, err := blobStore.Get(*baseHash)
+			if err != nil {
+				return err
+			}
+
+			ours, err := blobStore.Get(*oursHash)
+			if err != nil {
+				return err
+			}
+
+			theirs, err := blobStore.Get(*theirsHash)
+			if err != nil {
+				return err
+			}
+
+			result := MergeText(base, ours, theirs)
+
+			content := strings.Join(result.Lines, "\n")
+
+			if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func hashAt(files map[string]internal.Hash, path string) *internal.Hash {
+	hash, exists := files[path]
+	if !exists {
+		return nil
+	}
+
+	return &hash
+}
+
+func mergePaths(
+	base,
+	ours,
+	theirs map[string]internal.Hash,
+) []string {
+	pathSet := make(map[string]struct{})
+
+	for path := range base {
+		pathSet[path] = struct{}{}
+	}
+
+	for path := range ours {
+		pathSet[path] = struct{}{}
+	}
+
+	for path := range theirs {
+		pathSet[path] = struct{}{}
+	}
+
+	paths := make([]string, 0, len(pathSet))
+
+	for path := range pathSet {
+		paths = append(paths, path)
+	}
+
+	slices.Sort(paths)
+
+	return paths
 }
 
 func FastForward(dir string, target internal.CommitID) error {

@@ -444,3 +444,359 @@ func TestFastForwardCannotMoveHeadBackwardsButCheckoutCan(t *testing.T) {
 
 	require.Equal(t, "A", string(content))
 }
+
+func TestMergeConflictPersistsMergeHead(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := utils.WriteFile(dir, "file.txt", "base")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	_, err = utils.WriteFile(dir, "file.txt", "ours")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	_, err = CommitChanges(dir, "ours")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	_, err = utils.WriteFile(dir, "file.txt", "theirs")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	theirsID, err := CommitChanges(dir, "theirs")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	err = Merge(dir, theirsID)
+	require.NoError(t, err)
+
+	head, err := internal.ReadMergeHEAD(dir)
+	require.NoError(t, err)
+
+	require.Equal(t, theirsID, head)
+}
+
+func TestMergeConflictPersistsMergeBase(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+
+	_, err := utils.WriteFile(dir, "file.txt", "base")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	_, err = utils.WriteFile(dir, "file.txt", "ours")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	_, err = CommitChanges(dir, "ours")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	_, err = utils.WriteFile(dir, "file.txt", "theirs")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	theirsID, err := CommitChanges(dir, "theirs")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	err = Merge(dir, theirsID)
+	require.NoError(t, err)
+
+	base, err := internal.ReadMergeBase(dir)
+	require.NoError(t, err)
+
+	require.Equal(t, baseID, base)
+}
+
+func TestMergeConflictWritesMarkersToWorkingTree(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+	
+	// base
+	_, err := utils.WriteFile(dir, "file.txt", "base")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	// ours
+	_, err = utils.WriteFile(dir, "file.txt", "ours")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	oursID, err := CommitChanges(dir, "ours")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	// theirs
+	_, err = utils.WriteFile(dir, "file.txt", "theirs")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	theirsID, err := CommitChanges(dir, "theirs")
+	require.NoError(t, err)
+
+	err = Checkout(dir, oursID)
+	require.NoError(t, err)
+
+	err = Merge(dir, theirsID)
+	require.NoError(t, err)
+
+	content, err := utils.ReadFile(dir, "file.txt")
+	require.NoError(t, err)
+
+	expected := `<<<<<<< ours
+ours
+=======
+theirs
+>>>>>>> theirs`
+
+	require.Equal(t, expected, string(content))
+}
+
+func TestMergeConflictSurvivesReload(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+	
+	// base
+	_, err := utils.WriteFile(dir, "file.txt", "base")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	// ours
+	_, err = utils.WriteFile(dir, "file.txt", "ours")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	oursID, err := CommitChanges(dir, "ours")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	// theirs
+	_, err = utils.WriteFile(dir, "file.txt", "theirs")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	theirsID, err := CommitChanges(dir, "theirs")
+	require.NoError(t, err)
+
+	err = Checkout(dir, oursID)
+	require.NoError(t, err)
+
+	err = Merge(dir, theirsID)
+	require.NoError(t, err)
+
+	mergeHead, err := internal.ReadMergeHEAD(dir)
+	require.NoError(t, err)
+	require.Equal(t, theirsID, mergeHead)
+
+	mergeBase, err := internal.ReadMergeBase(dir)
+	require.NoError(t, err)
+	require.Equal(t, baseID, mergeBase)
+
+	head, err := internal.ReadHEAD(dir)
+	require.NoError(t, err)
+	require.Equal(t, oursID, head)
+}
+
+func TestCannotStartMergeWhileMergeIsInProgress(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+	
+	// base
+	_, err := utils.WriteFile(dir, "file.txt", "base")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	// ours
+	_, err = utils.WriteFile(dir, "file.txt", "ours")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	oursID, err := CommitChanges(dir, "ours")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	// theirs
+	_, err = utils.WriteFile(dir, "file.txt", "theirs")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	theirsID, err := CommitChanges(dir, "theirs")
+	require.NoError(t, err)
+
+	err = Checkout(dir, oursID)	
+	require.NoError(t, err)
+
+	err = Merge(dir, theirsID)
+	require.NoError(t, err)
+
+	// Attempt to start another merge while the first one is in progress
+	err = Merge(dir, baseID)
+	require.Error(t, err)
+}
+
+func TestAddCanStageResolvedConflict(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+	
+	// base
+	_, err := utils.WriteFile(dir, "file.txt", "base")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	// ours
+	_, err = utils.WriteFile(dir, "file.txt", "ours")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	oursID, err := CommitChanges(dir, "ours")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	// theirs
+	_, err = utils.WriteFile(dir, "file.txt", "theirs")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	theirsID, err := CommitChanges(dir, "theirs")
+	require.NoError(t, err)
+
+	err = Checkout(dir, oursID)
+	require.NoError(t, err)
+
+	err = Merge(dir, theirsID)
+	require.NoError(t, err)
+
+	// Resolve the conflict by editing the file
+	_, err = utils.WriteFile(dir, "file.txt", "resolved")
+	require.NoError(t, err)
+
+	// Stage the resolved file
+	require.NoError(t, Add(dir, "file.txt"))
+
+	staged, err := internal.StagedBlob(dir, "file.txt")
+	require.NoError(t, err)
+
+	require.Equal(t, []byte("resolved"), staged)
+}
+
+func TestCommitAfterConflictResolutionHasTwoParents(t *testing.T) {
+	dir := t.TempDir()
+
+	Init(dir, "test")
+	
+	// base
+	_, err := utils.WriteFile(dir, "file.txt", "base")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	// ours
+	_, err = utils.WriteFile(dir, "file.txt", "ours")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	oursID, err := CommitChanges(dir, "ours")
+	require.NoError(t, err)
+
+	err = Checkout(dir, baseID)
+	require.NoError(t, err)
+
+	// theirs
+	_, err = utils.WriteFile(dir, "file.txt", "theirs")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "file.txt"))
+
+	theirsID, err := CommitChanges(dir, "theirs")
+	require.NoError(t, err)
+
+	err = Checkout(dir, oursID)
+	require.NoError(t, err)
+
+	err = Merge(dir, theirsID)
+	require.NoError(t, err)
+
+	// Resolve the conflict by editing the file
+	_, err = utils.WriteFile(dir, "file.txt", "resolved")
+	require.NoError(t, err)
+
+	// Stage the resolved file
+	require.NoError(t, Add(dir, "file.txt"))
+
+	commitID, err := CommitChanges(dir, "resolved")
+	require.NoError(t, err)
+
+	commitStore := internal.NewCommitStore(dir)
+
+	commit, err := commitStore.Get(commitID)
+	require.NoError(t, err)
+
+	require.Equal(t, 2, len(commit.Parents))
+	require.Contains(t, commit.Parents, oursID)
+	require.Contains(t, commit.Parents, theirsID)
+}
