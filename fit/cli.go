@@ -20,6 +20,7 @@ func InitCLI(root *cobra.Command) {
 	root.AddCommand(NewInitCmd())
 	root.AddCommand(NewMergeCmd())
 	root.AddCommand(NewRmCmd())
+	root.AddCommand(NewStatusCmd())
 }
 
 func Execute(cmd *cobra.Command) {
@@ -182,6 +183,32 @@ func NewCheckoutCmd() *cobra.Command {
 			}
 
 			return fit_cmd.Checkout(currDir, internal.CommitID(args[0]))
+		},
+	}
+}
+
+func NewStatusCmd() *cobra.Command {
+	return &cobra.Command{
+		Use: "status",
+
+		Short: "Show the status of the repository",
+
+		Args: cobra.ExactArgs(0),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			status, err := fit_cmd.GetStatus(dir)
+			if err != nil {
+				return err
+			}
+
+			status.Print(cmd.OutOrStdout())
+			
+			return nil
 		},
 	}
 }
