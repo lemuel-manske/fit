@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-// Checkout checks out the specified commit in the given directory.
+// Checkout checks out the specified commit.
 func Checkout(dir string, targetID internal.CommitID) error {
 	commitStore := internal.NewCommitStore(dir)
 	blobStore := internal.NewBlobStore(dir)
@@ -23,7 +23,6 @@ func Checkout(dir string, targetID internal.CommitID) error {
 		return err
 	}
 
-	// 1. validate all blobs BEFORE modifying anything
 	contents := make(map[string][]byte)
 
 	for path, blobID := range target.Files {
@@ -35,7 +34,6 @@ func Checkout(dir string, targetID internal.CommitID) error {
 		contents[path] = content
 	}
 
-	// 2. remove files that exist in the current HEAD but not in the target
 	for path := range current.Files {
 		absPath := filepath.Join(dir, path)
 
@@ -46,7 +44,6 @@ func Checkout(dir string, targetID internal.CommitID) error {
 		}
 	}
 
-	// 3. write snapshot target
 	for path, content := range contents {
 		absPath := filepath.Join(dir, path)
 
@@ -55,6 +52,5 @@ func Checkout(dir string, targetID internal.CommitID) error {
 		}
 	}
 
-	// 4. then move HEAD
 	return internal.WriteHEAD(dir, targetID)
 }

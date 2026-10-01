@@ -47,6 +47,7 @@ type TextMergeResult struct {
 	Conflict bool
 }
 
+// Merge merges the specified commit into the current HEAD.
 func Merge(dir string, theirsID internal.CommitID) error {
 	currMergeHEAD, err := internal.ReadMergeHEAD(dir)
 	if err == nil {
@@ -86,7 +87,6 @@ func Merge(dir string, theirsID internal.CommitID) error {
 		return err
 	}
 
-	// Persist merge state before touching the working tree.
 	if err := internal.WriteMergeHEAD(dir, theirsID); err != nil {
 		return err
 	}

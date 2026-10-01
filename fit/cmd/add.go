@@ -9,7 +9,6 @@ import (
 )
 
 // Add adds a file or directory to the index.
-// If the path is a directory, it recursively adds all files in that directory.
 func Add(dir string, path string) error {
 	err := internal.ValidateRepoPath(path)
 	if err != nil {

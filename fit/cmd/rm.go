@@ -22,16 +22,12 @@ func Rm(dir string, path string) error {
 		return err
 	}
 
-	// 1. if there are any staged intentions for this path, rm just cancels that intention.
 	if _, exists := index.Entries[path]; exists {
 		delete(index.Entries, path)
 
 		return internal.WriteIndex(dir, index)
 	}
 
-	// 2. if the path is in the HEAD, removing it means:
-	// - delete it from the working tree
-	// - stage the deletion
 	tracked, err := internal.HEADContains(dir, path)
 	if err != nil {
 		return err
@@ -49,8 +45,6 @@ func Rm(dir string, path string) error {
 		return internal.WriteIndex(dir, index)
 	}
 
-	// 3. it's neither in the index nor in the HEAD,
-	// so if it exists in the working tree, just remove it.
 	err = os.Remove(absPath)
 	if err == nil {
 		return nil

@@ -49,11 +49,20 @@ func CommitChanges(dir string, message string) (internal.CommitID, error) {
 	if hasHEAD {
 		parents = append(parents, headID)
 
-		mergeHEAD, err := internal.ReadMergeHEAD(dir)
-		if err != nil {
-			// ignore error if mergeHEAD does not exist
-		} else if mergeHEAD != "" {
-			parents = append(parents, mergeHEAD)
+		mergeInProgress := internal.MergeInProgress(dir)
+
+		if mergeInProgress {
+			mergeCommitID, err := internal.ReadMergeHEAD(dir)
+			if err != nil {
+				return "", err
+			}
+
+			parents = append(parents, mergeCommitID)
+
+			err = internal.ClearMergeState(dir)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
