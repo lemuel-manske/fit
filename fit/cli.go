@@ -39,6 +39,8 @@ func NewInitCmd() *cobra.Command {
 	return &cobra.Command{
 		Use: "init",
 
+		Short: "Initializes a new fit repository",
+
 		Args: cobra.ExactArgs(0),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -47,7 +49,10 @@ func NewInitCmd() *cobra.Command {
 				return err
 			}
 
-			repositoryName := strings.TrimSuffix(filepath.Base(currDir), filepath.Ext(currDir))
+			repositoryName := strings.TrimSuffix(
+				filepath.Base(currDir),
+				filepath.Ext(currDir),
+			)
 
 			return fit_cmd.Init(currDir, repositoryName)
 		},
@@ -57,6 +62,8 @@ func NewInitCmd() *cobra.Command {
 func NewAddCmd() *cobra.Command {
 	return &cobra.Command{
 		Use: "add",
+
+		Short: "Add a file or directory to the index",
 
 		Args: cobra.ExactArgs(1),
 
@@ -75,6 +82,8 @@ func NewRmCmd() *cobra.Command {
 	return &cobra.Command{
 		Use: "rm",
 
+		Short: "Remove a file from the index",
+
 		Args: cobra.ExactArgs(1),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -89,10 +98,14 @@ func NewRmCmd() *cobra.Command {
 }
 
 func NewCommitCmd() *cobra.Command {
-	return &cobra.Command{
+	var message string
+
+	cmd := &cobra.Command{
 		Use: "commit",
 
-		Args: cobra.ExactArgs(1),
+		Short: "Commits the current changes in the index",
+
+		Args: cobra.ExactArgs(0),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			currDir, err := os.Getwd()
@@ -100,7 +113,7 @@ func NewCommitCmd() *cobra.Command {
 				return err
 			}
 
-			commitID, err := fit_cmd.CommitChanges(currDir, args[0])
+			commitID, err := fit_cmd.CommitChanges(currDir, message)
 
 			if err != nil {
 				return err
@@ -110,13 +123,27 @@ func NewCommitCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message")
+
+	return cmd
 }
 
 func NewMergeCmd() *cobra.Command {
-	return &cobra.Command{
-		Use: "merge",
+	var abort bool
 
-		Args: cobra.ExactArgs(1),
+	cmd := &cobra.Command{
+		Use: "merge [commit]",
+
+		Short: "Merges a specific commit into HEAD",
+
+		Args: func(cmd *cobra.Command, args []string) error {
+			if abort {
+				return cobra.NoArgs(cmd, args)
+			}
+
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			currDir, err := os.Getwd()
@@ -124,14 +151,27 @@ func NewMergeCmd() *cobra.Command {
 				return err
 			}
 
-			return fit_cmd.Merge(currDir, internal.CommitID(args[0]))
+			if abort {
+				return fit_cmd.MergeAbort(currDir)
+			}
+
+			return fit_cmd.Merge(
+				currDir,
+				internal.CommitID(args[0]),
+			)
 		},
 	}
+
+	cmd.Flags().BoolVar(&abort, "abort", false, "Abort the current merge")
+
+	return cmd
 }
 
 func NewCheckoutCmd() *cobra.Command {
 	return &cobra.Command{
-		Use: "checkout",
+		Use: "checkout [commit]",
+
+		Short: "Checkout a specific commit",
 
 		Args: cobra.ExactArgs(1),
 

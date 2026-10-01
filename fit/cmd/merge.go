@@ -47,6 +47,27 @@ type TextMergeResult struct {
 	Conflict bool
 }
 
+func MergeAbort(dir string) error {
+	if !internal.MergeInProgress(dir) {
+		return fmt.Errorf("no merge in progress")
+	}
+
+	head, err := internal.ReadHEAD(dir)
+	if err != nil {
+		return err
+	}
+
+	if err := Checkout(dir, head); err != nil {
+		return err
+	}
+
+	if err := internal.ClearMergeState(dir); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Merge merges the specified commit into the current HEAD.
 func Merge(dir string, theirsID internal.CommitID) error {
 	currMergeHEAD, err := internal.ReadMergeHEAD(dir)
