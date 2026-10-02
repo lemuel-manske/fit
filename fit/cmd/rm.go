@@ -22,6 +22,16 @@ func Rm(dir string, path string) error {
 		return err
 	}
 
+	if index.Entries[path].Conflict {
+		if err := os.Remove(absPath); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		index.Entries[path] = internal.IndexEntry{Delete: true}
+
+		return internal.WriteIndex(dir, index)
+	}
+
 	if _, exists := index.Entries[path]; exists {
 		delete(index.Entries, path)
 

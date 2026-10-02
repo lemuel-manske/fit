@@ -61,6 +61,17 @@ func MergeAbort(dir string) error {
 		return err
 	}
 
+	index, err := internal.LoadIndex(dir)
+	if err != nil {
+		return err
+	}
+
+	clear(index.Entries)
+
+	if err := internal.WriteIndex(dir, index); err != nil {
+		return err
+	}
+
 	if err := internal.ClearMergeState(dir); err != nil {
 		return err
 	}
@@ -78,6 +89,10 @@ func Merge(dir string, theirsID internal.CommitID) error {
 			currMergeHEAD,
 		)
 
+		return err
+	}
+
+	if !os.IsNotExist(err) {
 		return err
 	}
 
@@ -120,59 +135,106 @@ func Merge(dir string, theirsID internal.CommitID) error {
 
 	blobStore := internal.NewBlobStore(dir)
 
+	index, err := internal.LoadIndex(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, path := range paths {
+		if err := internal.ValidateRepoPath(path); err != nil {
+			return err
+		}
+
+		index.Entries[path] = internal.IndexEntry{Conflict: true}
+	}
+
+	if err := internal.WriteIndex(dir, index); err != nil {
+		return err
+	}
+
 	for _, path := range paths {
 		baseHash := hashAt(base.Files, path)
 		oursHash := hashAt(ours.Files, path)
 		theirsHash := hashAt(theirs.Files, path)
 
-		decision := TakeMergeDecision(
-			baseHash,
-			oursHash,
-			theirsHash,
-		)
+		decision := TakeMergeDecision(baseHash, oursHash, theirsHash)
 
 		absPath := filepath.Join(dir, path)
 
-		switch {
-		case decision.Delete:
-			if err := os.Remove(absPath); err != nil {
+		if decision.Delete {
+			if err := os.Remove(absPath); err != nil && !os.IsNotExist(err) {
 				return err
 			}
 
-		case decision.Blob != nil:
-			content, err := blobStore.Get(*decision.Blob)
-			if err != nil {
-				return err
-			}
+			index.Entries[path] = internal.IndexEntry{Delete: true}
 
-			if err := os.WriteFile(absPath, content, 0644); err != nil {
-				return err
-			}
-
-		case decision.Conflict:
-			base, err := blobStore.Get(*baseHash)
-			if err != nil {
-				return err
-			}
-
-			ours, err := blobStore.Get(*oursHash)
-			if err != nil {
-				return err
-			}
-
-			theirs, err := blobStore.Get(*theirsHash)
-			if err != nil {
-				return err
-			}
-
-			result := MergeText(base, ours, theirs)
-
-			content := strings.Join(result.Lines, "\n")
-
-			if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
-				return err
-			}
+			continue
 		}
+
+		var content []byte
+
+		conflict := false
+
+		if decision.Blob != nil {
+			content, err = blobStore.Get(*decision.Blob)
+			if err != nil {
+				return err
+			}
+		} else {
+			baseContent, err := blobStore.Get(*baseHash)
+			if err != nil {
+				return err
+			}
+
+			oursContent, err := blobStore.Get(*oursHash)
+			if err != nil {
+				return err
+			}
+
+			theirsContent, err := blobStore.Get(*theirsHash)
+			if err != nil {
+				return err
+			}
+
+			var result TextMergeResult
+
+			if oursHash == nil || theirsHash == nil {
+				result = ApplyMergeHunks(nil, []MergeHunk{{
+					Conflict: true,
+					Ours:     splitLines(oursContent),
+					Theirs:   splitLines(theirsContent),
+				}})
+			} else {
+				result = MergeText(
+					baseContent,
+					oursContent,
+					theirsContent,
+				)
+			}
+			content = []byte(strings.Join(result.Lines, "\n"))
+
+			conflict = result.Conflict
+		}
+
+		if err := os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(absPath, content, 0644); err != nil {
+			return err
+		}
+
+		hash, err := blobStore.Put(content)
+
+		if err != nil {
+			return err
+		}
+
+		index.Entries[path] = internal.IndexEntry{Blob: string(hash), Conflict: conflict}
+	}
+
+	if err := internal.WriteIndex(dir, index); err != nil {
+		return err
 	}
 
 	return nil

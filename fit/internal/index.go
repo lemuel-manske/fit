@@ -33,8 +33,9 @@ func (i *Index) UnmarshalJSON(data []byte) error {
 }
 
 type IndexEntry struct {
-	Blob   string `json:"blob,omitempty"`
-	Delete bool   `json:"delete,omitempty"`
+	Blob     string `json:"blob,omitempty"`
+	Conflict bool   `json:"conflict,omitempty"`
+	Delete   bool   `json:"delete,omitempty"`
 }
 
 func (i *IndexEntry) UnmarshalJSON(data []byte) error {

@@ -1,8 +1,10 @@
 package cmd
 
 import (
-	"fit/fit/internal"
+	"fmt"
 	"time"
+
+	"fit/fit/internal"
 )
 
 func CommitChanges(dir string, message string) (internal.CommitID, error) {
@@ -11,6 +13,12 @@ func CommitChanges(dir string, message string) (internal.CommitID, error) {
 	index, err := internal.LoadIndex(dir)
 	if err != nil {
 		return "", err
+	}
+
+	for path, entry := range index.Entries {
+		if entry.Conflict {
+			return "", fmt.Errorf("unresolved merge conflict: %s", path)
+		}
 	}
 
 	headID, err := internal.ReadHEAD(dir)
@@ -59,11 +67,6 @@ func CommitChanges(dir string, message string) (internal.CommitID, error) {
 			}
 
 			parents = append(parents, mergeCommitID)
-
-			err = internal.ClearMergeState(dir)
-			if err != nil {
-				return "", err
-			}
 		}
 	}
 
@@ -97,6 +100,10 @@ func CommitChanges(dir string, message string) (internal.CommitID, error) {
 
 	err = internal.WriteIndex(dir, index)
 	if err != nil {
+		return "", err
+	}
+
+	if err := internal.ClearMergeState(dir); err != nil {
 		return "", err
 	}
 
