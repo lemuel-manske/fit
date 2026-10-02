@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fit/fit/internal"
+	"time"
 )
 
 func CommitChanges(dir string, message string) (internal.CommitID, error) {
@@ -66,10 +67,20 @@ func CommitChanges(dir string, message string) (internal.CommitID, error) {
 		}
 	}
 
+	config, err := internal.LoadConfig(dir)
+	if err != nil {
+		return "", err
+	}
+
 	commit := internal.Commit{
-		Parents: parents,
-		Message: message,
-		Files:   files,
+		Author: internal.Author{
+			PeerID: config.PeerID,
+		},
+		Parents:      parents,
+		Message:      message,
+		RepositoryID: config.RepositoryID,
+		Timestamp:    time.Now().UTC(),
+		Files:        files,
 	}
 
 	commitID, err := store.Put(commit)

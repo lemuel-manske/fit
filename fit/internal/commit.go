@@ -26,7 +26,6 @@ type Commit struct {
 
 type Author struct {
 	PeerID PeerID `json:"peerId"`
-	Name   string `json:"name"`
 }
 
 type CommitStore interface {
