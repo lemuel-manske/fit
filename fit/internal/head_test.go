@@ -31,8 +31,6 @@ func TestHEADContains(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, InitCommitStore(dir))
-
 	store := NewCommitStore(dir)
 
 	commitID, err := store.Put(commit)

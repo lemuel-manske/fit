@@ -27,18 +27,14 @@ func NewBlobID(data []byte) Hash {
 	return Hash(encoded)
 }
 
-func InitBlobStore(dir string) error {
+func NewBlobStore(dir string) *FsBlobStore {
 	blobDirPath := BlobsPath(dir)
 
 	// ensure the blobs directory exists
 	if err := os.MkdirAll(blobDirPath, 0755); err != nil {
-		return err
+		panic(err)
 	}
 
-	return nil
-}
-
-func NewBlobStore(dir string) *FsBlobStore {
 	return &FsBlobStore{dir: dir}
 }
 

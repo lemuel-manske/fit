@@ -45,18 +45,14 @@ func NewCommitID(commit Commit) CommitID {
 	return CommitID(encoded)
 }
 
-func InitCommitStore(dir string) error {
+func NewCommitStore(dir string) *FsCommitStore {
 	commitDirPath := CommitsPath(dir)
 
 	// ensure the commits directory exists
 	if err := os.MkdirAll(commitDirPath, 0755); err != nil {
-		return err
+		panic(err)
 	}
 
-	return nil
-}
-
-func NewCommitStore(dir string) *FsCommitStore {
 	return &FsCommitStore{dir: dir}
 }
 

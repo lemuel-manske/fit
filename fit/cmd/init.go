@@ -40,15 +40,9 @@ func Init(repoDir string, repoName string) error {
 		return err
 	}
 
-	err = internal.InitBlobStore(repoDir)
-	if err != nil {
-		return err
-	}
-
-	err = internal.InitCommitStore(repoDir)
-	if err != nil {
-		return err
-	}
+	// create initial .fit/blobs and .fit/commits directories
+	_ = internal.NewBlobStore(repoDir)
+	_ = internal.NewCommitStore(repoDir)
 
 	return nil
 }

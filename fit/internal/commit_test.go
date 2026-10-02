@@ -216,8 +216,6 @@ func TestCommitIDChangesWithContent(t *testing.T) {
 func TestAncestorOfSiblingsIsTheirParent(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
-
 	a := Commit{
 		Message: "first",
 	}
@@ -253,8 +251,6 @@ func TestAncestorOfSiblingsIsTheirParent(t *testing.T) {
 func TestAncestorWhenOneCommitIsAncestorOfTheOther(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
-
 	a := Commit{
 		Message: "first",
 	}
@@ -282,8 +278,6 @@ func TestAncestorWhenOneCommitIsAncestorOfTheOther(t *testing.T) {
 func TestNoCommonAncestor(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
-
 	a := Commit{
 		Message: "first",
 	}
@@ -307,8 +301,6 @@ func TestNoCommonAncestor(t *testing.T) {
 func TestPutAndGetCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
-
 	commit := Commit{
 		Message: "first commit",
 		Files: map[string]Hash{
@@ -331,8 +323,6 @@ func TestPutAndGetCommit(t *testing.T) {
 func TestCommitStoreRejectsUnsafeManifestPath(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
-
 	commit := Commit{
 		Files: map[string]Hash{
 			"../outside.txt": "abc",
@@ -348,8 +338,6 @@ func TestCommitStoreRejectsUnsafeManifestPath(t *testing.T) {
 
 func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 	dir := t.TempDir()
-
-	InitCommitStore(dir)
 
 	commit := Commit{
 		Message: "first commit",
@@ -374,8 +362,6 @@ func TestGetCommitRejectsCorruptedCommit(t *testing.T) {
 func TestPutCommitTwiceProducesSameID(t *testing.T) {
 	dir := t.TempDir()
 
-	InitCommitStore(dir)
-
 	commit := Commit{
 		Message: "first commit",
 		Files: map[string]Hash{
@@ -396,8 +382,6 @@ func TestPutCommitTwiceProducesSameID(t *testing.T) {
 
 func TestGetNonExistentCommit(t *testing.T) {
 	dir := t.TempDir()
-
-	InitCommitStore(dir)
 
 	store := NewCommitStore(dir)
 

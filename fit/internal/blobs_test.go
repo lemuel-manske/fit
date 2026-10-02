@@ -49,8 +49,6 @@ func TestDifferentContentProducesDifferentBlobIDs(t *testing.T) {
 func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 	dir := t.TempDir()
 
-	internal.InitBlobStore(dir)
-
 	store := internal.NewBlobStore(dir)
 
 	id, err := store.Put([]byte("hello"))
@@ -65,8 +63,6 @@ func TestGetBlobRejectsContentThatDoesNotMatchItsID(t *testing.T) {
 
 func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 	dir := t.TempDir()
-
-	internal.InitBlobStore(dir)
 
 	store := internal.NewBlobStore(dir)
 
@@ -90,8 +86,6 @@ func TestPutSameBlobTwiceDoesNotOverwrite(t *testing.T) {
 
 func TestGetNonExistentBlobReturnsError(t *testing.T) {
 	dir := t.TempDir()
-
-	internal.InitBlobStore(dir)
 
 	store := internal.NewBlobStore(dir)
 
