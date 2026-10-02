@@ -97,7 +97,11 @@ func GetStatus(dir string) (*Status, error) {
 	headFiles := map[string]internal.Hash{}
 
 	headID, err := internal.ReadHEAD(dir)
-	if err == nil && headID != "" {
+	if err != nil {
+		return nil, err
+	}
+
+	if headID != "" {
 		store := internal.NewCommitStore(dir)
 
 		head, err := store.Get(headID)

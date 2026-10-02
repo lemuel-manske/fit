@@ -9,33 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCheckout(t *testing.T) {
-	dir := t.TempDir()
-
-	require.NoError(t, Init(dir, "test"))
-
-	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
-	require.NoError(t, err)
-
-	err = Add(dir, "test.txt")
-	require.NoError(t, err)
-
-	commitID, err := CommitChanges(dir, "Initial commit")
-	require.NoError(t, err)
-
-	// modify the file after committing
-	_, err = utils.WriteFile(dir, "test.txt", "Goodbye, World!")
-	require.NoError(t, err)
-
-	err = Checkout(dir, commitID)
-	require.NoError(t, err)
-
-	content, err := utils.ReadFile(dir, "test.txt")
-	require.NoError(t, err)
-
-	require.Equal(t, "Hello, World!", string(content))
-}
-
 func TestCheckoutMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
@@ -115,4 +88,112 @@ func TestCheckoutRemovesTrackedPostCommitFiles(t *testing.T) {
 	// the new file should be removed after checkout
 	_, err = utils.ReadFile(dir, "newfile.txt")
 	require.Error(t, err)
+}
+
+func TestCheckoutRejectsModifiedWorkingTree(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, Init(dir, "test"))
+
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
+
+	err = Add(dir, "test.txt")
+	require.NoError(t, err)
+
+	commitID, err := CommitChanges(dir, "Initial commit")
+	require.NoError(t, err)
+
+	// modify the file after committing
+	_, err = utils.WriteFile(dir, "test.txt", "Modified content")
+	require.NoError(t, err)
+
+	err = Checkout(dir, commitID)
+	require.Error(t, err) // should error due to modified working tree
+}
+
+func TestCheckoutRejectsStagedChanges(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, Init(dir, "test"))
+
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
+
+	err = Add(dir, "test.txt")
+	require.NoError(t, err)
+
+	commitID, err := CommitChanges(dir, "Initial commit")
+	require.NoError(t, err)
+
+	// modify the file after committing
+	_, err = utils.WriteFile(dir, "test.txt", "Modified content")
+	require.NoError(t, err)
+
+	err = Add(dir, "test.txt")
+	require.NoError(t, err)
+
+	err = Checkout(dir, commitID)
+	require.Error(t, err) // should error due to staged changes
+}
+
+func TestCheckoutRejectsUntrackedFileCollision(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, Init(dir, "test"))
+
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
+
+	err = Add(dir, "test.txt")
+	require.NoError(t, err)
+
+	commitID, err := CommitChanges(dir, "Initial commit")
+	require.NoError(t, err)
+
+	// create an untracked file that would collide with a tracked file in the commit
+	_, err = utils.WriteFile(dir, "test.txt", "Untracked content")
+	require.NoError(t, err)
+
+	err = Checkout(dir, commitID)
+	require.Error(t, err) // should error due to untracked file collision
+}
+
+func TestCheckoutHandlesFileDirectoryTransition(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, Init(dir, "test"))
+
+	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "test.txt"))
+
+	commitA, err := CommitChanges(dir, "file")
+	require.NoError(t, err)
+
+	require.NoError(t, Rm(dir, "test.txt"))
+
+	_, err = utils.WriteFile(dir, "test.txt", "nested.txt", "Nested")
+	require.NoError(t, err)
+
+	require.NoError(t, Add(dir, "test.txt/nested.txt"))
+
+	commitB, err := CommitChanges(dir, "directory")
+	require.NoError(t, err)
+
+	// go back to file state.
+	require.NoError(t, Checkout(dir, commitA))
+
+	content, err := utils.ReadFile(dir, "test.txt")
+	require.NoError(t, err)
+	require.Equal(t, "Hello, World!", string(content))
+
+	// now checkout directory state.
+	require.NoError(t, Checkout(dir, commitB))
+
+	content, err = utils.ReadFile(dir, "test.txt/nested.txt")
+	require.NoError(t, err)
+
+	require.Equal(t, "Nested", string(content))
 }

@@ -6,8 +6,34 @@ import (
 	"path/filepath"
 )
 
+// MkdirAll creates a directory and all necessary parents.
+func MkdirAll(elements ...string) (string, error) {
+	dir := filepath.Join(elements...)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return "", err
+	}
+
+	return dir, nil
+}
+
+// RemoveFile removes a file at the given path.
+func RemoveFile(elements ...string) error {
+	fileName := elements[len(elements)-1]
+
+	dir := filepath.Join(elements[:len(elements)-1]...)
+	path := filepath.Join(dir, fileName)
+
+	err := os.Remove(path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // WriteFile creates a new file with the given content.
-func WriteFile(elements... string) (string, error) {
+func WriteFile(elements ...string) (string, error) {
 	content := elements[len(elements)-1]
 	fileName := elements[len(elements)-2]
 
@@ -28,7 +54,7 @@ func WriteFile(elements... string) (string, error) {
 }
 
 // ReadFile reads the content of a file and returns it as a byte slice.
-func ReadFile(elements... string) ([]byte, error) {
+func ReadFile(elements ...string) ([]byte, error) {
 	fileName := elements[len(elements)-1]
 
 	dir := filepath.Join(elements[:len(elements)-1]...)

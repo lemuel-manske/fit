@@ -57,7 +57,7 @@ func MergeAbort(dir string) error {
 		return err
 	}
 
-	if err := Checkout(dir, head); err != nil {
+	if err := ForceCheckout(dir, head); err != nil {
 		return err
 	}
 
