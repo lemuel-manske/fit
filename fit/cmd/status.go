@@ -25,7 +25,8 @@ type Status struct {
 }
 
 func (s *Status) IsClean() bool {
-	return len(s.StagedModified) == 0 &&
+	return !s.MergeInProgress &&
+		len(s.StagedModified) == 0 &&
 		len(s.StagedDeleted) == 0 &&
 		len(s.Modified) == 0 &&
 		len(s.Deleted) == 0 &&

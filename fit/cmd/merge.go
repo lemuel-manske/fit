@@ -211,7 +211,7 @@ func Merge(dir string, theirsID internal.CommitID) error {
 					theirsContent,
 				)
 			}
-			content = []byte(strings.Join(result.Lines, "\n"))
+			content = []byte(strings.Join(result.Lines, ""))
 
 			conflict = result.Conflict
 		}
@@ -438,11 +438,11 @@ func ApplyMergeHunks(
 		if h.Conflict {
 			conflict = true
 
-			result = append(result, "<<<<<<< ours")
+			result = append(result, "<<<<<<< ours\n")
 			result = append(result, h.Ours...)
-			result = append(result, "=======")
+			result = append(result, "=======\n")
 			result = append(result, h.Theirs...)
-			result = append(result, ">>>>>>> theirs")
+			result = append(result, ">>>>>>> theirs\n")
 		} else {
 			result = append(result, h.Lines...)
 		}

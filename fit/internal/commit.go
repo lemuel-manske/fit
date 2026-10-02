@@ -152,36 +152,90 @@ func IsAncestor(dir string, descendant, ancestor CommitID) (bool, error) {
 
 func Ancestor(dir string, commits ...CommitID) (CommitID, error) {
 	if len(commits) < 2 {
-		return "", fmt.Errorf("at least two commits are required to find a common ancestor")
+		return "", fmt.Errorf("at least two commits are required")
 	}
-
-	visited := map[CommitID]int{}
 
 	store := NewCommitStore(dir)
 
-	for _, commitID := range commits {
-		stack := []CommitID{commitID}
+	distances := make([]map[CommitID]int, len(commits))
 
-		for len(stack) > 0 {
-			current := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
+	for i, id := range commits {
+		d, err := ancestorDistances(store, id)
+		if err != nil {
+			return "", err
+		}
 
-			visited[current]++
+		distances[i] = d
+	}
 
-			if visited[current] == len(commits) {
-				return current, nil
+	var best CommitID
+	bestScore := int(^uint(0) >> 1)
+	found := false
+
+	for candidate, d0 := range distances[0] {
+		score := d0
+		common := true
+
+		for i := 1; i < len(distances); i++ {
+			d, ok := distances[i][candidate]
+			if !ok {
+				common = false
+				break
 			}
 
-			commit, err := store.Get(current)
-			if err != nil {
-				return "", err
-			}
+			score += d
+		}
 
-			stack = append(stack, commit.Parents...)
+		if !common {
+			continue
+		}
+
+		if !found || score < bestScore {
+			best = candidate
+			bestScore = score
+			found = true
+		} else if score == bestScore && candidate != best {
+			return "", fmt.Errorf("multiple closest common ancestors")
 		}
 	}
 
-	return "", fmt.Errorf("no common ancestor found")
+	if !found {
+		return "", fmt.Errorf("no common ancestor found")
+	}
+
+	return best, nil
+}
+
+func ancestorDistances(
+	store CommitStore,
+	start CommitID,
+) (map[CommitID]int, error) {
+	dist := map[CommitID]int{start: 0}
+	queue := []CommitID{start}
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		commit, err := store.Get(current)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, parent := range commit.Parents {
+			nextDistance := dist[current] + 1
+
+			old, seen := dist[parent]
+			if seen && old <= nextDistance {
+				continue
+			}
+
+			dist[parent] = nextDistance
+			queue = append(queue, parent)
+		}
+	}
+
+	return dist, nil
 }
 
 func CurrentCommit(dir string) (Commit, error) {

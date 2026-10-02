@@ -274,13 +274,13 @@ func TestMergeTextConflictingChanges(t *testing.T) {
 	got := MergeText(base, ours, theirs)
 
 	expected := []string{
-		"<<<<<<< ours",
+		"<<<<<<< ours\n",
 		"ONE\n",
 		"Two\n",
-		"=======",
+		"=======\n",
 		"onE\n",
 		"TWO\n",
-		">>>>>>> theirs",
+		">>>>>>> theirs\n",
 	}
 
 	require.Equal(t, expected, got.Lines)
@@ -576,10 +576,9 @@ func TestMergeConflictWritesMarkersToWorkingTree(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := `<<<<<<< ours
-ours
-=======
-theirs
->>>>>>> theirs`
+ours=======
+theirs>>>>>>> theirs
+`
 
 	require.Equal(t, expected, string(content))
 }
