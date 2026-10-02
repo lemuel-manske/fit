@@ -11,8 +11,8 @@ import (
 
 // Rm removes a file or directory from the index.
 func Rm(dir string, path string) error {
-	if path == "" {
-		return fmt.Errorf("path cannot be empty")
+	if err := internal.ValidateRepoPath(path); err != nil {
+		return err
 	}
 
 	absPath := filepath.Join(dir, path)

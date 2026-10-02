@@ -11,7 +11,7 @@ import (
 func TestRmNonExistentFile(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	require.NoError(t, Init(dir, "test"))
 
 	err := Rm(dir, "nonexistent.txt")
 	require.Error(t, err)
@@ -20,7 +20,7 @@ func TestRmNonExistentFile(t *testing.T) {
 func TestRmEmptyPath(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	require.NoError(t, Init(dir, "test"))
 
 	err := Rm(dir, "")
 	require.Error(t, err)
@@ -29,7 +29,7 @@ func TestRmEmptyPath(t *testing.T) {
 func TestRmUntrackedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "untracked.txt", "I am untracked")
 	require.NoError(t, err)
@@ -44,7 +44,7 @@ func TestRmUntrackedFile(t *testing.T) {
 func TestRmAfterAdd(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestRmAfterAdd(t *testing.T) {
 func TestAddAfterRm(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -82,7 +82,7 @@ func TestAddAfterRm(t *testing.T) {
 func TestRmModifiedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -107,7 +107,7 @@ func TestRmModifiedFile(t *testing.T) {
 func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test-repo")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello")
 	require.NoError(t, err)
@@ -132,5 +132,21 @@ func TestRmTwiceRemovesFromIndexThenWorkingTree(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = utils.ReadFile(dir, "test.txt")
+	require.Error(t, err)
+}
+
+func TestRmRejectsPathOutsideRepository(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, Init(dir, "test"))
+
+	_, err := utils.WriteFile(dir, "test.txt", "Hello")
+	require.NoError(t, err)
+
+	err = Add(dir, "test.txt")
+	require.NoError(t, err)
+
+	// Attempt to remove a file outside the repository
+	err = Rm(dir, "../outside.txt")
 	require.Error(t, err)
 }
