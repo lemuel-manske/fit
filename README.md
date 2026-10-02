@@ -26,7 +26,7 @@
 
 > Não depende dos passos 1 e 2
 
-- [ ] `fit status`
+- [X] `fit status`
 - [ ] `fit log`
 - [X] `fit merge --abort`
 
