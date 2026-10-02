@@ -47,6 +47,7 @@ type TextMergeResult struct {
 	Conflict bool
 }
 
+// MergeAbort aborts the current merge and resets the working directory to the state of the current HEAD.
 func MergeAbort(dir string) error {
 	if !internal.MergeInProgress(dir) {
 		return fmt.Errorf("no merge in progress")
