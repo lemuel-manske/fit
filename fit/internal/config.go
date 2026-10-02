@@ -1,9 +1,14 @@
 package internal
 
 import (
+	"fmt"
 	"os"
 
 	"encoding/json"
+)
+
+const (
+	errInvalidFormatVersion = "invalid format version"
 )
 
 // Config keeps track of peer metadata and repository information.
@@ -53,6 +58,10 @@ func LoadConfig(dir string) (*Config, error) {
 	err = json.Unmarshal(data, config)
 	if err != nil {
 		return nil, err
+	}
+
+	if config.FormatVersion != FormatVersion {
+		return nil, fmt.Errorf("%s: expected %d, got %d", errInvalidFormatVersion, FormatVersion, config.FormatVersion)
 	}
 
 	return config, nil
