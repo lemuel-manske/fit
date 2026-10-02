@@ -23,13 +23,13 @@ func Add(dir string, path string) error {
 	}
 
 	if info.IsDir() {
-		files, err := os.ReadDir(absPath)
+		workingTreeFiles, err := workingTreeFiles(absPath)
 		if err != nil {
 			return err
 		}
 
-		for _, file := range files {
-			err := Add(dir, filepath.Join(path, file.Name()))
+		for fname := range workingTreeFiles {
+			err := Add(dir, filepath.Join(path, fname))
 			if err != nil {
 				return err
 			}
