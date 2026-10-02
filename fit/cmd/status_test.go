@@ -11,7 +11,7 @@ import (
 func TestStatusCleanTrackedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -29,7 +29,7 @@ func TestStatusCleanTrackedFile(t *testing.T) {
 func TestStatusStagedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -50,7 +50,7 @@ func TestStatusStagedFile(t *testing.T) {
 func TestStatusStagedFileUnmodifiedAfterAdd(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestStatusStagedFileUnmodifiedAfterAdd(t *testing.T) {
 func TestStatusStagedFileModifiedAfterAdd(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -95,7 +95,7 @@ func TestStatusStagedFileModifiedAfterAdd(t *testing.T) {
 func TestStatusModifiedTrackedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -122,7 +122,7 @@ func TestStatusModifiedTrackedFile(t *testing.T) {
 func TestStatusDeletedTrackedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestStatusDeletedTrackedFile(t *testing.T) {
 func TestStatusStagedDeletion(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestStatusStagedDeletion(t *testing.T) {
 func TestStatusUntrackedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "untracked.txt", "I am untracked")
 	require.NoError(t, err)
@@ -200,7 +200,7 @@ func TestStatusUntrackedFile(t *testing.T) {
 func TestStatusNestedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "nested", "file.txt", "Nested file content")
 	require.NoError(t, err)
@@ -218,7 +218,7 @@ func TestStatusNestedFile(t *testing.T) {
 func TestStatusIgnoresDotFit(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test-repo"))
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, ".fit", "ignored.txt", "This should be ignored")
 	require.NoError(t, err)

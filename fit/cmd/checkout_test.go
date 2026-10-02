@@ -12,7 +12,7 @@ import (
 func TestCheckout(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -39,7 +39,7 @@ func TestCheckout(t *testing.T) {
 func TestCheckoutMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestCheckoutMovesHEAD(t *testing.T) {
 func TestCheckoutKeepsUntrackedPostCommitFiles(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestCheckoutKeepsUntrackedPostCommitFiles(t *testing.T) {
 func TestCheckoutRemovesTrackedPostCommitFiles(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)

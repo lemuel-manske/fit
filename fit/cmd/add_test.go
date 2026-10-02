@@ -12,7 +12,7 @@ import (
 func TestAddNonExistentFile(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	err := Add(dir, "nonexistent.txt")
 	require.Error(t, err)
@@ -21,7 +21,7 @@ func TestAddNonExistentFile(t *testing.T) {
 func TestAddEmptyPath(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	err := Add(dir, "")
 	require.Error(t, err)
@@ -30,7 +30,7 @@ func TestAddEmptyPath(t *testing.T) {
 func TestUpdateFileBlobStaysSame(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestUpdateFileBlobStaysSame(t *testing.T) {
 func TestAddSameFileTwice(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestAddSameFileTwice(t *testing.T) {
 func TestAddFile(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestAddFile(t *testing.T) {
 func TestAddDeepFile(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "subdir", "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestAddDeepFile(t *testing.T) {
 func TestAddVeryDeepFile(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "subdir", "subdir2", "subdir3", "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -125,7 +125,7 @@ func TestAddVeryDeepFile(t *testing.T) {
 func TestAddDir(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "subdir", "test1.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -148,7 +148,7 @@ func TestAddDir(t *testing.T) {
 func TestAddRejectsPathOutsideRepo(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "..", "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestAddRejectsPathOutsideRepo(t *testing.T) {
 func TestAddRejectsAbsolutePath(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -174,7 +174,7 @@ func TestAddRejectsAbsolutePath(t *testing.T) {
 func TestAddRejectsPathUnderFitDir(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, ".fit", "test.txt", "Hello, World!")
 	require.NoError(t, err)

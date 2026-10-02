@@ -12,7 +12,7 @@ import (
 func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestCommitDoesNotModifyWorkingTree(t *testing.T) {
 func TestFirstCommitMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestFirstCommitMovesHEAD(t *testing.T) {
 func TestSecondCommitMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestSecondCommitMovesHEAD(t *testing.T) {
 func TestFirstCommitContainsStagedFiles(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -109,7 +109,7 @@ func TestFirstCommitContainsStagedFiles(t *testing.T) {
 func TestCommitClearsIndex(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -129,10 +129,9 @@ func TestCommitClearsIndex(t *testing.T) {
 func TestRmAfterCommit(t *testing.T) {
 	dir := t.TempDir()
 
-	err := Init(dir, "test")
-	require.NoError(t, err)
+	require.NoError(t, Init(dir, "test"))
 
-	_, err = utils.WriteFile(dir, "a.txt", "Hello")
+	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
 
 	err = Add(dir, "a.txt")
@@ -159,7 +158,7 @@ func TestRmAfterCommit(t *testing.T) {
 func TestCommitWithMultipleFiles(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -189,7 +188,7 @@ func TestCommitWithMultipleFiles(t *testing.T) {
 func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -216,7 +215,7 @@ func TestCommitUsesIndexNotWorkingTree(t *testing.T) {
 func TestCommitKeepsParentCommits(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -248,7 +247,7 @@ func TestCommitKeepsParentCommits(t *testing.T) {
 func TestCommitWithNAncestors(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -296,7 +295,7 @@ func TestCommitWithNAncestors(t *testing.T) {
 func TestSecondCommitKeepsFilesFromParent(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -331,7 +330,7 @@ func TestSecondCommitKeepsFilesFromParent(t *testing.T) {
 func TestFirstCommitHasNoParents(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
@@ -353,7 +352,7 @@ func TestFirstCommitHasNoParents(t *testing.T) {
 func TestCommitAppliesStagedDeletion(t *testing.T) {
 	dir := t.TempDir()
 
-	Init(dir, "test")
+	require.NoError(t, Init(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "Hello")
 	require.NoError(t, err)
