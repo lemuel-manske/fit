@@ -4,7 +4,6 @@ import (
 	fit "fit/fit"
 )
 
-
 func main() {
 	rootCmd := fit.NewRootCmd()
 

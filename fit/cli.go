@@ -207,7 +207,7 @@ func NewStatusCmd() *cobra.Command {
 			}
 
 			status.Print(cmd.OutOrStdout())
-			
+
 			return nil
 		},
 	}

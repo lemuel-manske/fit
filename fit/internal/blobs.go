@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	errCorruptedBlob   = "corrupted blob"
+	errCorruptedBlob = "corrupted blob"
 )
 
 type BlobStore interface {
@@ -98,4 +98,3 @@ func StagedBlob(dir string, file string) ([]byte, error) {
 
 	return content, nil
 }
-

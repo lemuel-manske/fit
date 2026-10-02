@@ -41,4 +41,3 @@ func HEADContains(dir, path string) (bool, error) {
 	_, exists := commit.Files[path]
 	return exists, nil
 }
-
