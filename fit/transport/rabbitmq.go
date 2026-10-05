@@ -31,18 +31,6 @@ func NewRabbitMQ(url string) (Transport, error) {
 	}, nil
 }
 
-func (r *RabbitMQ) ensureExchange(name string) error {
-	return r.ch.ExchangeDeclare(
-		name,
-		"fanout",
-		false,
-		true,
-		false,
-		false,
-		nil,
-	)
-}
-
 func (r *RabbitMQ) Publish(
 	ctx context.Context,
 	exchange string,
@@ -53,7 +41,6 @@ func (r *RabbitMQ) Publish(
 	}
 
 	headers := amqp.Table{}
-
 	for key, value := range message.Headers {
 		headers[key] = value
 	}
@@ -61,9 +48,9 @@ func (r *RabbitMQ) Publish(
 	return r.ch.PublishWithContext(
 		ctx,
 		exchange,
-		"", // fanout exchange does not use routing keys
-		false,
-		false,
+		"",    // fanout exchange does not use routing keys
+		false, // mandatory
+		false, // immediate
 		amqp.Publishing{
 			ContentType:   message.ContentType,
 			Body:          message.Body,
@@ -72,20 +59,6 @@ func (r *RabbitMQ) Publish(
 			Headers:       headers,
 		},
 	)
-}
-
-type rabbitSubscription struct {
-	ch    *amqp.Channel
-	queue string
-	msgs  chan Delivery
-}
-
-func (s *rabbitSubscription) Messages() <-chan Delivery {
-	return s.msgs
-}
-
-func (s *rabbitSubscription) Close() error {
-	return s.ch.Close()
 }
 
 func (r *RabbitMQ) Subscribe(
@@ -100,10 +73,10 @@ func (r *RabbitMQ) Subscribe(
 	if err = ch.ExchangeDeclare(
 		exchange,
 		"fanout",
-		false,
-		true,
-		false,
-		false,
+		false, // durable
+		true,  // autoDelete
+		false, // internal
+		false, // noWait
 		nil,
 	); err != nil {
 		_ = ch.Close()
@@ -111,11 +84,11 @@ func (r *RabbitMQ) Subscribe(
 	}
 
 	queue, err := ch.QueueDeclare(
-		"",
-		false,
-		true,
-		true,
-		false,
+		"",    // let RabbitMQ generate a unique queue name
+		false, // durable
+		true,  // autoDelete
+		true,  // exclusive
+		false, // noWait
 		nil,
 	)
 	if err != nil {
@@ -125,9 +98,9 @@ func (r *RabbitMQ) Subscribe(
 
 	if err = ch.QueueBind(
 		queue.Name,
-		"",
+		"", // let RabbitMQ handle binding name
 		exchange,
-		false,
+		false, // noWait
 		nil,
 	); err != nil {
 		_ = ch.Close()
@@ -136,15 +109,16 @@ func (r *RabbitMQ) Subscribe(
 
 	deliveries, err := ch.Consume(
 		queue.Name,
-		"",
-		false,
-		true,
-		false,
-		false,
+		"",    // let RabbitMQ generate a unique consumer tag
+		false, // autoAck
+		true,  // exclusive
+		false, // noLocal
+		false, // noWait
 		nil,
 	)
 	if err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
@@ -188,7 +162,7 @@ func (r *RabbitMQ) Subscribe(
 		}
 	}()
 
-	return &rabbitSubscription{
+	return &RabbitMQSubscription{
 		ch:    ch,
 		queue: queue.Name,
 		msgs:  out,
@@ -204,8 +178,8 @@ func (r *RabbitMQ) Reply(
 		ctx,
 		"",
 		queue,
-		false,
-		false,
+		false, // immediate
+		false, // mandatory
 		amqp.Publishing{
 			ContentType:   message.ContentType,
 			Body:          message.Body,
@@ -226,10 +200,10 @@ func (r *RabbitMQ) Request(
 
 	queue, err := ch.QueueDeclare(
 		"",
-		false,
-		true,
-		true,
-		false,
+		false, // durable
+		true,  // autoDelete
+		true,  // exclusive
+		false, // noWait
 		nil,
 	)
 	if err != nil {
@@ -245,10 +219,10 @@ func (r *RabbitMQ) Request(
 	deliveries, err := ch.Consume(
 		queue.Name,
 		"",
-		true,
-		true,
-		false,
-		false,
+		true,  // autoAck
+		true,  // exclusive
+		false, // noLocal
+		false, // noWait
 		nil,
 	)
 	if err != nil {
@@ -300,4 +274,30 @@ func (r *RabbitMQ) Close() error {
 	}
 
 	return r.conn.Close()
+}
+
+func (r *RabbitMQ) ensureExchange(name string) error {
+	return r.ch.ExchangeDeclare(
+		name,
+		"fanout",
+		false, // durable
+		true,  // autoDelete
+		false, // internal
+		false, // noWait
+		nil,   // no args
+	)
+}
+
+type RabbitMQSubscription struct {
+	ch    *amqp.Channel
+	queue string
+	msgs  chan Delivery
+}
+
+func (s *RabbitMQSubscription) Messages() <-chan Delivery {
+	return s.msgs
+}
+
+func (s *RabbitMQSubscription) Close() error {
+	return s.ch.Close()
 }

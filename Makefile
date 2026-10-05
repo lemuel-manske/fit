@@ -7,5 +7,8 @@ test:
 fmt:
 	go fmt ./...
 
+check:
+	go test ./... && go fmt ./...
+
 start-mom:
 	docker compose down && docker compose up

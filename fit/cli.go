@@ -7,9 +7,8 @@ import (
 	"strings"
 	"time"
 
-	fit_cmd "fit/fit/cmd"
-
-	"fit/fit/internal"
+	"fit/fit/fs"
+	"fit/fit/repo"
 
 	"path/filepath"
 
@@ -23,8 +22,8 @@ func InitCLI(root *cobra.Command) {
 	root.AddCommand(NewCommitCmd())
 	root.AddCommand(NewInitCmd())
 	root.AddCommand(NewMergeCmd())
+	root.AddCommand(NewRemoveCmd())
 	root.AddCommand(NewReposCmd())
-	root.AddCommand(NewRmCmd())
 	root.AddCommand(NewServeCmd())
 	root.AddCommand(NewStatusCmd())
 	root.AddCommand(NewSyncCmd())
@@ -62,7 +61,7 @@ func NewInitCmd() *cobra.Command {
 				filepath.Ext(currDir),
 			)
 
-			return fit_cmd.InitNew(currDir, repositoryName)
+			return repo.Init(currDir, repositoryName)
 		},
 	}
 }
@@ -81,12 +80,12 @@ func NewAddCmd() *cobra.Command {
 				return err
 			}
 
-			return fit_cmd.Add(currDir, args[0])
+			return repo.Add(currDir, args[0])
 		},
 	}
 }
 
-func NewRmCmd() *cobra.Command {
+func NewRemoveCmd() *cobra.Command {
 	return &cobra.Command{
 		Use: "rm",
 
@@ -100,7 +99,7 @@ func NewRmCmd() *cobra.Command {
 				return err
 			}
 
-			return fit_cmd.Rm(currDir, args[0])
+			return repo.Remove(currDir, args[0])
 		},
 	}
 }
@@ -121,7 +120,7 @@ func NewCommitCmd() *cobra.Command {
 				return err
 			}
 
-			commitID, err := fit_cmd.CommitChanges(currDir, message)
+			commitID, err := repo.CommitChanges(currDir, message)
 
 			if err != nil {
 				return err
@@ -166,12 +165,12 @@ func NewMergeCmd() *cobra.Command {
 			}
 
 			if abort {
-				return fit_cmd.MergeAbort(currDir)
+				return repo.MergeAbort(currDir)
 			}
 
-			return fit_cmd.Merge(
+			return repo.Merge(
 				currDir,
-				internal.CommitID(args[0]),
+				fs.CommitID(args[0]),
 			)
 		},
 	}
@@ -200,7 +199,7 @@ func NewCheckoutCmd() *cobra.Command {
 				return err
 			}
 
-			return fit_cmd.Checkout(currDir, internal.CommitID(args[0]))
+			return repo.Checkout(currDir, fs.CommitID(args[0]))
 		},
 	}
 }
@@ -219,7 +218,7 @@ func NewStatusCmd() *cobra.Command {
 				return err
 			}
 
-			status, err := fit_cmd.GetStatus(dir)
+			status, err := repo.GetStatus(dir)
 			if err != nil {
 				return err
 			}
@@ -243,7 +242,7 @@ func NewServeCmd() *cobra.Command {
 				return err
 			}
 
-			return fit_cmd.Serve(
+			return repo.Serve(
 				dir,
 				cmd.Context(),
 			)
@@ -265,7 +264,7 @@ func NewReposCmd() *cobra.Command {
 				return err
 			}
 
-			config, err := internal.LoadConfig(dir)
+			config, err := fs.LoadConfig(dir)
 			if err != nil {
 				return err
 			}
@@ -276,12 +275,12 @@ func NewReposCmd() *cobra.Command {
 			)
 			defer cancel()
 
-			offers, err := fit_cmd.DiscoverAll(dir, ctx)
+			offers, err := repo.DiscoverAll(dir, ctx)
 			if err != nil {
 				return err
 			}
 
-			seen := map[internal.RepositoryID]bool{}
+			seen := map[fs.RepositoryID]bool{}
 
 			for offer := range offers {
 				if seen[offer.RepositoryID] {
@@ -343,7 +342,7 @@ func NewSyncCmd() *cobra.Command {
 			)
 			defer cancel()
 
-			return fit_cmd.Sync(dir, ctx)
+			return repo.Sync(dir, ctx)
 		},
 	}
 
@@ -372,7 +371,7 @@ func NewCloneCmd() *cobra.Command {
 			)
 			defer cancel()
 
-			return fit_cmd.Clone(
+			return repo.Clone(
 				ctx,
 				args[0],
 				args[1],
