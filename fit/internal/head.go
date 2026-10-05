@@ -7,7 +7,7 @@ import (
 func WriteHEAD(dir string, commitID CommitID) error {
 	path := HEADPath(dir)
 
-	return os.WriteFile(path, []byte(commitID), 0644)
+	return WriteFileAtomic(path, []byte(commitID), 0644)
 }
 
 func ReadHEAD(dir string) (CommitID, error) {

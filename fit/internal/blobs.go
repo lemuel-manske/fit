@@ -44,7 +44,8 @@ func (s *FsBlobStore) Put(data []byte) (Hash, error) {
 	path := BlobPath(s.dir, id)
 
 	// write the data to the file
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	err := WriteFileAtomic(path, data, 0644)
+	if err != nil {
 		return "", err
 	}
 

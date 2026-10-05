@@ -23,7 +23,7 @@ func ReadMergeHEAD(dir string) (CommitID, error) {
 func WriteMergeHEAD(dir string, commitID CommitID) error {
 	path := MergeHEADPath(dir)
 
-	return os.WriteFile(path, []byte(commitID), 0644)
+	return WriteFileAtomic(path, []byte(commitID), 0644)
 }
 
 func ReadMergeBase(dir string) (CommitID, error) {
@@ -40,7 +40,7 @@ func ReadMergeBase(dir string) (CommitID, error) {
 func WriteMergeBase(dir string, commitID CommitID) error {
 	path := MergeBasePath(dir)
 
-	return os.WriteFile(path, []byte(commitID), 0644)
+	return WriteFileAtomic(path, []byte(commitID), 0644)
 }
 
 func ClearMergeState(dir string) error {

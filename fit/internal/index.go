@@ -80,7 +80,7 @@ func WriteIndex(dir string, index *Index) error {
 
 	indexPath := IndexPath(dir)
 
-	err = os.WriteFile(indexPath, data, 0644)
+	err = WriteFileAtomic(indexPath, data, 0644)
 	if err != nil {
 		return err
 	}

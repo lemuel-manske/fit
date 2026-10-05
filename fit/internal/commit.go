@@ -81,7 +81,8 @@ func (s *FsCommitStore) Put(commit Commit) (CommitID, error) {
 		return "", err
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	err = WriteFileAtomic(path, data, 0644)
+	if err != nil {
 		return "", err
 	}
 
