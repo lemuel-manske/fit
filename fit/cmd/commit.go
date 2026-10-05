@@ -8,6 +8,11 @@ import (
 )
 
 func CommitChanges(dir string, message string) (internal.CommitID, error) {
+	err := internal.RequireInitialized(dir)
+	if err != nil {
+		return "", err
+	}
+
 	store := internal.NewCommitStore(dir)
 
 	index, err := internal.LoadIndex(dir)

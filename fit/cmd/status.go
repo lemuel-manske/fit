@@ -33,7 +33,7 @@ func (s *Status) IsClean() bool {
 		len(s.Untracked) == 0
 }
 
-// git-like priting with colors
+// Print works as a git-like status output
 func (s *Status) Print(writer io.Writer) {
 	if s.MergeInProgress {
 		_, _ = writer.Write([]byte("Merge in progress...\n"))
@@ -80,6 +80,11 @@ func (s *Status) Print(writer io.Writer) {
 }
 
 func GetStatus(dir string) (*Status, error) {
+	err := internal.RequireInitialized(dir)
+	if err != nil {
+		return nil, err
+	}
+
 	status := &Status{
 		StagedModified: []string{},
 		StagedDeleted:  []string{},

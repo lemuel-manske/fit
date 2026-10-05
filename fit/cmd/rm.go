@@ -11,6 +11,11 @@ import (
 
 // Rm removes a file or directory from the index.
 func Rm(dir string, path string) error {
+	err := internal.RequireInitialized(dir)
+	if err != nil {
+		return err
+	}
+
 	if err := internal.ValidateRepoPath(path); err != nil {
 		return err
 	}

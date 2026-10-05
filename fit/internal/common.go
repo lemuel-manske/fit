@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	"path/filepath"
@@ -31,6 +33,20 @@ func fitPath(dir, file string) string {
 
 func WriteFitDir(dir string) error {
 	return os.MkdirAll(filepath.Join(dir, fitDir), 0755)
+}
+
+func RequireInitialized(dir string) error {
+	configPath := filepath.Join(dir, ".fit", "config.json")
+
+	if _, err := os.Stat(configPath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("not a FIT repository; run 'fit init' first")
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func BlobsPath(dir string) string {

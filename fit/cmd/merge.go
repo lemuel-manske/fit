@@ -49,6 +49,11 @@ type TextMergeResult struct {
 
 // MergeAbort aborts the current merge and resets the working directory to the state of the current HEAD.
 func MergeAbort(dir string) error {
+	err := internal.RequireInitialized(dir)
+	if err != nil {
+		return err
+	}
+
 	if !internal.MergeInProgress(dir) {
 		return fmt.Errorf("no merge in progress")
 	}
@@ -82,6 +87,11 @@ func MergeAbort(dir string) error {
 
 // Merge merges the specified commit into the current HEAD.
 func Merge(dir string, theirsID internal.CommitID) error {
+	err := internal.RequireInitialized(dir)
+	if err != nil {
+		return err
+	}
+
 	currMergeHEAD, err := internal.ReadMergeHEAD(dir)
 	if err == nil {
 		err = fmt.Errorf(

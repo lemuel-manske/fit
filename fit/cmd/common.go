@@ -6,6 +6,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	RemoteURL = "amqp://guest:guest@localhost:5672"
+)
+
 func workingTreeFiles(root string) (map[string][]byte, error) {
 	files := make(map[string][]byte)
 

@@ -20,6 +20,11 @@ func Checkout(dir string, targetID internal.CommitID) error {
 }
 
 func doCheckout(dir string, targetID internal.CommitID, force bool) error {
+	err := internal.RequireInitialized(dir)
+	if err != nil {
+		return err
+	}
+
 	commitStore := internal.NewCommitStore(dir)
 	blobStore := internal.NewBlobStore(dir)
 

@@ -12,7 +12,7 @@ import (
 func TestCheckoutMovesHEAD(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestCheckoutMovesHEAD(t *testing.T) {
 func TestCheckoutKeepsUntrackedPostCommitFiles(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestCheckoutKeepsUntrackedPostCommitFiles(t *testing.T) {
 func TestCheckoutRemovesTrackedPostCommitFiles(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -93,7 +93,7 @@ func TestCheckoutRemovesTrackedPostCommitFiles(t *testing.T) {
 func TestCheckoutRejectsModifiedWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -115,7 +115,7 @@ func TestCheckoutRejectsModifiedWorkingTree(t *testing.T) {
 func TestCheckoutRejectsStagedChanges(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -140,7 +140,7 @@ func TestCheckoutRejectsStagedChanges(t *testing.T) {
 func TestCheckoutRejectsUntrackedFileCollision(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)
@@ -162,7 +162,7 @@ func TestCheckoutRejectsUntrackedFileCollision(t *testing.T) {
 func TestCheckoutHandlesFileDirectoryTransition(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "test.txt", "Hello, World!")
 	require.NoError(t, err)

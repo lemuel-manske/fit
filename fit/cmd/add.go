@@ -10,7 +10,12 @@ import (
 
 // Add adds a file or directory to the index.
 func Add(dir string, path string) error {
-	err := internal.ValidateRepoPath(path)
+	err := internal.RequireInitialized(dir)
+	if err != nil {
+		return err
+	}
+
+	err = internal.ValidateRepoPath(path)
 	if err != nil {
 		return err
 	}

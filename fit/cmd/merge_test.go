@@ -362,7 +362,7 @@ func TestMergeLFChanges(t *testing.T) {
 func TestFastForwardMovesHeadAndWorkingTreeToDescendant(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "A")
 	require.NoError(t, err)
@@ -401,7 +401,7 @@ func TestFastForwardMovesHeadAndWorkingTreeToDescendant(t *testing.T) {
 func TestFastForwardCannotMoveHeadBackwardsButCheckoutCan(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "a.txt", "A")
 	require.NoError(t, err)
@@ -446,7 +446,7 @@ func TestFastForwardCannotMoveHeadBackwardsButCheckoutCan(t *testing.T) {
 func TestMergeConflictPersistsMergeHead(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "file.txt", "base")
 	require.NoError(t, err)
@@ -490,7 +490,7 @@ func TestMergeConflictPersistsMergeHead(t *testing.T) {
 func TestMergeConflictPersistsMergeBase(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "file.txt", "base")
 	require.NoError(t, err)
@@ -534,7 +534,7 @@ func TestMergeConflictPersistsMergeBase(t *testing.T) {
 func TestMergeConflictWritesMarkersToWorkingTree(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -586,7 +586,7 @@ theirs>>>>>>> theirs
 func TestMergeConflictSurvivesReload(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -640,7 +640,7 @@ func TestMergeConflictSurvivesReload(t *testing.T) {
 func TestCannotStartMergeWhileMergeIsInProgress(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -686,7 +686,7 @@ func TestCannotStartMergeWhileMergeIsInProgress(t *testing.T) {
 func TestAddCanStageResolvedConflict(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -740,7 +740,7 @@ func TestAddCanStageResolvedConflict(t *testing.T) {
 func TestCommitAfterConflictResolutionHasTwoParents(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -801,7 +801,7 @@ func TestCommitAfterConflictResolutionHasTwoParents(t *testing.T) {
 func TestCommitAfterMergeClearsMergeState(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -859,7 +859,7 @@ func TestCommitAfterMergeClearsMergeState(t *testing.T) {
 func TestMergeCommitMovesHead(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -916,7 +916,7 @@ func TestMergeCommitMovesHead(t *testing.T) {
 func TestMergeAbortRestoresHEAD(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -967,7 +967,7 @@ func TestMergeAbortRestoresHEAD(t *testing.T) {
 func TestMergeAbortClearsMergeState(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	// base
 	_, err := utils.WriteFile(dir, "file.txt", "base")
@@ -1019,7 +1019,7 @@ func TestMergeAbortClearsMergeState(t *testing.T) {
 func TestMergeAbortFailsIfNoMergeInProgress(t *testing.T) {
 	dir := t.TempDir()
 
-	require.NoError(t, Init(dir, "test"))
+	require.NoError(t, InitNew(dir, "test"))
 
 	_, err := utils.WriteFile(dir, "file.txt", "content")
 	require.NoError(t, err)

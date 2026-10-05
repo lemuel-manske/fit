@@ -1,11 +1,14 @@
 package fit
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	fit_cmd "fit/fit/cmd"
+
 	"fit/fit/internal"
 
 	"path/filepath"
@@ -16,11 +19,15 @@ import (
 func InitCLI(root *cobra.Command) {
 	root.AddCommand(NewAddCmd())
 	root.AddCommand(NewCheckoutCmd())
+	root.AddCommand(NewCloneCmd())
 	root.AddCommand(NewCommitCmd())
 	root.AddCommand(NewInitCmd())
 	root.AddCommand(NewMergeCmd())
+	root.AddCommand(NewReposCmd())
 	root.AddCommand(NewRmCmd())
+	root.AddCommand(NewServeCmd())
 	root.AddCommand(NewStatusCmd())
+	root.AddCommand(NewSyncCmd())
 }
 
 func Execute(cmd *cobra.Command) {
@@ -55,7 +62,7 @@ func NewInitCmd() *cobra.Command {
 				filepath.Ext(currDir),
 			)
 
-			return fit_cmd.Init(currDir, repositoryName)
+			return fit_cmd.InitNew(currDir, repositoryName)
 		},
 	}
 }
@@ -125,7 +132,13 @@ func NewCommitCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message")
+	cmd.Flags().StringVarP(
+		&message,
+		"message",
+		"m",
+		"",
+		"Commit message",
+	)
 
 	return cmd
 }
@@ -163,7 +176,12 @@ func NewMergeCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&abort, "abort", false, "Abort the current merge")
+	cmd.Flags().BoolVar(
+		&abort,
+		"abort",
+		false,
+		"Abort the current merge",
+	)
 
 	return cmd
 }
@@ -211,4 +229,163 @@ func NewStatusCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func NewServeCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "serve",
+		Short: "Serve this FIT peer",
+		Args:  cobra.NoArgs,
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			return fit_cmd.Serve(
+				dir,
+				cmd.Context(),
+			)
+		},
+	}
+}
+
+func NewReposCmd() *cobra.Command {
+	var timeout time.Duration
+
+	cmd := &cobra.Command{
+		Use:   "repos",
+		Short: "Discover FIT repositories",
+		Args:  cobra.NoArgs,
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			config, err := internal.LoadConfig(dir)
+			if err != nil {
+				return err
+			}
+
+			ctx, cancel := context.WithTimeout(
+				cmd.Context(),
+				timeout,
+			)
+			defer cancel()
+
+			offers, err := fit_cmd.DiscoverAll(dir, ctx)
+			if err != nil {
+				return err
+			}
+
+			seen := map[internal.RepositoryID]bool{}
+
+			for offer := range offers {
+				if seen[offer.RepositoryID] {
+					continue
+				}
+
+				seen[offer.RepositoryID] = true
+
+				out := cmd.OutOrStdout()
+
+				name := offer.RepositoryName
+
+				if offer.PeerID == config.PeerID {
+					name += " (You)"
+				}
+
+				fmt.Fprintf(out, "  %s\n", name)
+				fmt.Fprintf(out, "    repository: %s\n", offer.RepositoryID)
+				fmt.Fprintf(out, "    peer:       %s\n", offer.PeerID)
+
+				if offer.Head != "" {
+					fmt.Fprintf(out, "    head:       %s\n", offer.Head)
+				}
+
+				fmt.Fprintln(out)
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().DurationVar(
+		&timeout,
+		"timeout",
+		2*time.Second,
+		"Discovery timeout",
+	)
+
+	return cmd
+}
+
+func NewSyncCmd() *cobra.Command {
+	var timeout time.Duration
+
+	cmd := &cobra.Command{
+		Use:   "sync",
+		Short: "Synchronize objects from remote peers",
+		Args:  cobra.NoArgs,
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			ctx, cancel := context.WithTimeout(
+				cmd.Context(),
+				timeout,
+			)
+			defer cancel()
+
+			return fit_cmd.Sync(dir, ctx)
+		},
+	}
+
+	cmd.Flags().DurationVar(
+		&timeout,
+		"timeout",
+		10*time.Second,
+		"Sync timeout",
+	)
+
+	return cmd
+}
+
+func NewCloneCmd() *cobra.Command {
+	var timeout time.Duration
+
+	cmd := &cobra.Command{
+		Use:   "clone <repository> <directory>",
+		Short: "Clone a FIT repository",
+		Args:  cobra.ExactArgs(2),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithTimeout(
+				cmd.Context(),
+				timeout,
+			)
+			defer cancel()
+
+			return fit_cmd.Clone(
+				ctx,
+				args[0],
+				args[1],
+			)
+		},
+	}
+
+	cmd.Flags().DurationVar(
+		&timeout,
+		"timeout",
+		30*time.Second,
+		"Clone timeout",
+	)
+
+	return cmd
 }

@@ -3,3 +3,9 @@ build:
 
 test:
 	go test ./...
+
+fmt:
+	go fmt ./...
+
+start-mom:
+	docker compose down && docker compose up

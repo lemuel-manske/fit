@@ -12,7 +12,7 @@ import (
 func TestInitCreatesInitialConfigurationFile(t *testing.T) {
 	dir := t.TempDir()
 
-	err := Init(dir, "My repository")
+	err := InitNew(dir, "My repository")
 	require.NoError(t, err)
 
 	config, err := internal.LoadConfig(dir)
@@ -32,7 +32,7 @@ func TestInitCreatesInitialConfigurationFile(t *testing.T) {
 func TestInitCreatesInitialIndexFile(t *testing.T) {
 	dir := t.TempDir()
 
-	err := Init(dir, "My repository")
+	err := InitNew(dir, "My repository")
 	require.NoError(t, err)
 
 	index, err := internal.LoadIndex(dir)

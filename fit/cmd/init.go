@@ -6,15 +6,21 @@ import (
 	"github.com/google/uuid"
 )
 
-// Init initializes a new repository in the specified directory with the given repository name.
-func Init(repoDir string, repoName string) error {
+// InitNew initializes a new repository in the specified directory with a new configuration.
+func InitNew(repoDir string, repoName string) error {
 	config := &internal.Config{
 		FormatVersion:  internal.FormatVersion,
 		PeerID:         internal.PeerID(uuid.New().String()),
 		RepositoryID:   internal.RepositoryID(uuid.New().String()),
 		RepositoryName: repoName,
+		URL:            RemoteURL,
 	}
 
+	return InitWith(repoDir, config)
+}
+
+// InitWith initializes an existing repository in the specified directory with the provided configuration.
+func InitWith(repoDir string, config *internal.Config) error {
 	err := internal.WriteFitDir(repoDir)
 	if err != nil {
 		return err
