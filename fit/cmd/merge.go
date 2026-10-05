@@ -58,7 +58,7 @@ func MergeAbort(dir string) error {
 		return err
 	}
 
-	if err := ForceCheckout(dir, head); err != nil {
+	if err = ForceCheckout(dir, head); err != nil {
 		return err
 	}
 
@@ -124,11 +124,11 @@ func Merge(dir string, theirsID internal.CommitID) error {
 		return err
 	}
 
-	if err := internal.WriteMergeHEAD(dir, theirsID); err != nil {
+	if err = internal.WriteMergeHEAD(dir, theirsID); err != nil {
 		return err
 	}
 
-	if err := internal.WriteMergeBase(dir, baseID); err != nil {
+	if err = internal.WriteMergeBase(dir, baseID); err != nil {
 		return err
 	}
 
@@ -142,14 +142,14 @@ func Merge(dir string, theirsID internal.CommitID) error {
 	}
 
 	for _, path := range paths {
-		if err := internal.ValidateRepoPath(path); err != nil {
+		if err = internal.ValidateRepoPath(path); err != nil {
 			return err
 		}
 
 		index.Entries[path] = internal.IndexEntry{Conflict: true}
 	}
 
-	if err := internal.WriteIndex(dir, index); err != nil {
+	if err = internal.WriteIndex(dir, index); err != nil {
 		return err
 	}
 
@@ -163,7 +163,7 @@ func Merge(dir string, theirsID internal.CommitID) error {
 		absPath := filepath.Join(dir, path)
 
 		if decision.Delete {
-			if err := os.Remove(absPath); err != nil && !os.IsNotExist(err) {
+			if err = os.Remove(absPath); err != nil && !os.IsNotExist(err) {
 				return err
 			}
 
