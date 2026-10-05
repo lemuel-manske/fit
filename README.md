@@ -1,35 +1,5 @@
 # FIT
 
-## Tracking
-
-### 1. RabbitMQ
-
-- [X] docker-compose.yaml
-
-- [ ] criar interfaces golang para RabbitMQ (amqp) e abstrair o transporte
-
-- [ ] criar setup de exchanges, bindings e queues
-
-- [ ] `fit serve`
-  - tcp://localhost:5672
-  - conectar com RabbitMQ
-
-### 2. Comandos relativos ao transporte
-
-> Depende do passo 1
-
-- [ ] `fit clone`
-- [ ] `fit sync`
-- [ ] `fit repos`
-
-### 3. Comandos adicionais
-
-> Não depende dos passos 1 e 2
-
-- [X] `fit status`
-- [ ] `fit log`
-- [X] `fit merge --abort`
-
 FIT é um sistema local de controle de versão distribuído.
 
 Ao final dessa especificação, encontra-se um glossário para os termos-chave.
