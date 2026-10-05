@@ -76,8 +76,7 @@ func WriteConfig(dir string, config *Config) error {
 
 	configPath := ConfigPath(dir)
 
-	err = os.WriteFile(configPath, data, 0644)
-	if err != nil {
+	if err = os.WriteFile(configPath, data, 0644); err != nil {
 		return err
 	}
 

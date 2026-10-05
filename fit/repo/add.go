@@ -15,8 +15,7 @@ func Add(dir string, path string) error {
 		return err
 	}
 
-	err = fs.ValidateRepoPath(path)
-	if err != nil {
+	if err = fs.ValidateRepoPath(path); err != nil {
 		return err
 	}
 
@@ -34,8 +33,8 @@ func Add(dir string, path string) error {
 		}
 
 		for fname := range workingTreeFiles {
-			err := Add(dir, filepath.Join(path, fname))
-			if err != nil {
+
+			if err = Add(dir, filepath.Join(path, fname)); err != nil {
 				return err
 			}
 		}
@@ -64,8 +63,7 @@ func Add(dir string, path string) error {
 		Blob: string(blobID),
 	}
 
-	err = fs.WriteIndex(dir, index)
-	if err != nil {
+	if err = fs.WriteIndex(dir, index); err != nil {
 		return err
 	}
 

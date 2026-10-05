@@ -80,8 +80,7 @@ func WriteIndex(dir string, index *Index) error {
 
 	indexPath := IndexPath(dir)
 
-	err = WriteFileAtomic(indexPath, data, 0644)
-	if err != nil {
+	if err = WriteFileAtomic(indexPath, data, 0644); err != nil {
 		return err
 	}
 

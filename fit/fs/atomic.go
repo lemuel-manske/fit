@@ -30,13 +30,11 @@ func WriteFileAtomic(path string, data []byte, perm os.FileMode) error {
 		return err
 	}
 
-	err = file.Chmod(perm)
-	if err != nil {
+	if err = file.Chmod(perm); err != nil {
 		return err
 	}
 
-	err = file.Sync()
-	if err != nil {
+	if err = file.Sync(); err != nil {
 		return err
 	}
 
@@ -46,8 +44,7 @@ func WriteFileAtomic(path string, data []byte, perm os.FileMode) error {
 		return err
 	}
 
-	err = os.Rename(tempPath, path)
-	if err != nil {
+	if err = os.Rename(tempPath, path); err != nil {
 		return err
 	}
 
@@ -100,8 +97,7 @@ func RemoveFile(elements ...string) error {
 	dir := filepath.Join(elements[:len(elements)-1]...)
 	path := filepath.Join(dir, fileName)
 
-	err := os.Remove(path)
-	if err != nil {
+	if err := os.Remove(path); err != nil {
 		return err
 	}
 

@@ -27,7 +27,7 @@ func Sync(dir string, ctx context.Context) error {
 	defer t.Close()
 
 	// First resume previous incomplete syncs.
-	if err := resumeIncompleteSyncs(
+	if err = resumeIncompleteSyncs(
 		dir,
 		ctx,
 		t,
@@ -94,7 +94,7 @@ func Sync(dir string, ctx context.Context) error {
 		found = true
 
 		// Persist intent BEFORE downloading.
-		if err := fs.MarkSyncHead(
+		if err = fs.MarkSyncHead(
 			dir,
 			offer.PeerID,
 			offer.Head,
@@ -103,7 +103,7 @@ func Sync(dir string, ctx context.Context) error {
 			return err
 		}
 
-		if err := FetchHead(
+		if err = FetchHead(
 			dir,
 			ctx,
 			t,
@@ -117,7 +117,7 @@ func Sync(dir string, ctx context.Context) error {
 			)
 		}
 
-		if err := fs.WritePeerRef(
+		if err = fs.WritePeerRef(
 			dir,
 			offer.PeerID,
 			offer.Head,
@@ -125,7 +125,7 @@ func Sync(dir string, ctx context.Context) error {
 			return err
 		}
 
-		if err := fs.MarkSyncHead(
+		if err = fs.MarkSyncHead(
 			dir,
 			offer.PeerID,
 			offer.Head,
@@ -158,7 +158,7 @@ func resumeIncompleteSyncs(
 			continue
 		}
 
-		if err := FetchHead(
+		if err = FetchHead(
 			dir,
 			ctx,
 			t,
@@ -172,7 +172,7 @@ func resumeIncompleteSyncs(
 			)
 		}
 
-		if err := fs.WritePeerRef(
+		if err = fs.WritePeerRef(
 			dir,
 			peerID,
 			head.CommitID,
@@ -180,7 +180,7 @@ func resumeIncompleteSyncs(
 			return err
 		}
 
-		if err := fs.MarkSyncHead(
+		if err = fs.MarkSyncHead(
 			dir,
 			peerID,
 			head.CommitID,

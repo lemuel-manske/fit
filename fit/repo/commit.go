@@ -108,7 +108,7 @@ func CommitChanges(dir string, message string) (fs.CommitID, error) {
 		return "", err
 	}
 
-	if err := fs.ClearMergeState(dir); err != nil {
+	if err = fs.ClearMergeState(dir); err != nil {
 		return "", err
 	}
 

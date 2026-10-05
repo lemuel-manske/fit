@@ -76,7 +76,7 @@ func serveOnce(dir string, ctx context.Context) error {
 	defer repoSub.Close()
 
 	// every successful connection/reconnection publishes current HEAD.
-	if err := announceHead(dir, ctx, t); err != nil {
+	if err = announceHead(dir, ctx, t); err != nil {
 		return err
 	}
 
@@ -92,7 +92,7 @@ func serveOnce(dir string, ctx context.Context) error {
 				return fmt.Errorf("discovery subscription closed")
 			}
 
-			if err := handleDiscovery(
+			if err = handleDiscovery(
 				dir,
 				t,
 				delivery,
@@ -113,7 +113,7 @@ func serveOnce(dir string, ctx context.Context) error {
 				return fmt.Errorf("repository subscription closed")
 			}
 
-			if err := handleRepositoryRequest(
+			if err = handleRepositoryRequest(
 				dir,
 				t,
 				delivery,

@@ -74,11 +74,11 @@ func MergeAbort(dir string) error {
 
 	clear(index.Entries)
 
-	if err := fs.WriteIndex(dir, index); err != nil {
+	if err = fs.WriteIndex(dir, index); err != nil {
 		return err
 	}
 
-	if err := fs.ClearMergeState(dir); err != nil {
+	if err = fs.ClearMergeState(dir); err != nil {
 		return err
 	}
 
@@ -227,11 +227,11 @@ func Merge(dir string, theirsID fs.CommitID) error {
 			conflict = result.Conflict
 		}
 
-		if err := os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
+		if err = os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
 			return err
 		}
 
-		if err := os.WriteFile(absPath, content, 0644); err != nil {
+		if err = os.WriteFile(absPath, content, 0644); err != nil {
 			return err
 		}
 
@@ -244,7 +244,7 @@ func Merge(dir string, theirsID fs.CommitID) error {
 		index.Entries[path] = fs.IndexEntry{Blob: string(hash), Conflict: conflict}
 	}
 
-	if err := fs.WriteIndex(dir, index); err != nil {
+	if err = fs.WriteIndex(dir, index); err != nil {
 		return err
 	}
 

@@ -16,7 +16,7 @@ func Remove(dir string, path string) error {
 		return err
 	}
 
-	if err := fs.ValidateRepoPath(path); err != nil {
+	if err = fs.ValidateRepoPath(path); err != nil {
 		return err
 	}
 
@@ -28,7 +28,7 @@ func Remove(dir string, path string) error {
 	}
 
 	if index.Entries[path].Conflict {
-		if err := os.Remove(absPath); err != nil && !os.IsNotExist(err) {
+		if err = os.Remove(absPath); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 

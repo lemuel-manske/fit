@@ -103,7 +103,7 @@ func (s *FsCommitStore) Get(id CommitID) (Commit, error) {
 	}
 
 	var commit Commit
-	if err := json.Unmarshal(data, &commit); err != nil {
+	if err = json.Unmarshal(data, &commit); err != nil {
 		return Commit{}, err
 	}
 

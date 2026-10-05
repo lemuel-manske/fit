@@ -65,7 +65,7 @@ func doCheckout(dir string, targetID fs.CommitID, force bool) error {
 
 	// Validate everything first.
 	for path, blobID := range target.Files {
-		if err := fs.ValidateRepoPath(path); err != nil {
+		if err = fs.ValidateRepoPath(path); err != nil {
 			return err
 		}
 
@@ -84,7 +84,7 @@ func doCheckout(dir string, targetID fs.CommitID, force bool) error {
 
 		absPath := filepath.Join(dir, filepath.FromSlash(path))
 
-		if err := os.RemoveAll(absPath); err != nil {
+		if err = os.RemoveAll(absPath); err != nil {
 			return err
 		}
 	}
@@ -94,16 +94,16 @@ func doCheckout(dir string, targetID fs.CommitID, force bool) error {
 
 		// Handles directory -> file transition.
 		if info, err := os.Stat(absPath); err == nil && info.IsDir() {
-			if err := os.RemoveAll(absPath); err != nil {
+			if err = os.RemoveAll(absPath); err != nil {
 				return err
 			}
 		}
 
-		if err := os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
+		if err = os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
 			return err
 		}
 
-		if err := os.WriteFile(absPath, content, 0644); err != nil {
+		if err = os.WriteFile(absPath, content, 0644); err != nil {
 			return err
 		}
 	}

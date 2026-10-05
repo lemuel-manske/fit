@@ -31,7 +31,7 @@ func LoadSyncState(dir string) (*SyncState, error) {
 
 	var state SyncState
 
-	if err := json.Unmarshal(data, &state); err != nil {
+	if err = json.Unmarshal(data, &state); err != nil {
 		return nil, err
 	}
 

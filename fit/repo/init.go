@@ -26,8 +26,7 @@ func InitWithConfig(repoDir string, config *fs.Config) error {
 		return err
 	}
 
-	err = fs.WriteConfig(repoDir, config)
-	if err != nil {
+	if err = fs.WriteConfig(repoDir, config); err != nil {
 		return err
 	}
 
@@ -36,13 +35,11 @@ func InitWithConfig(repoDir string, config *fs.Config) error {
 		Entries: make(map[string]fs.IndexEntry),
 	}
 
-	err = fs.WriteIndex(repoDir, index)
-	if err != nil {
+	if err = fs.WriteIndex(repoDir, index); err != nil {
 		return err
 	}
 
-	err = fs.WriteHEAD(repoDir, "")
-	if err != nil {
+	if err = fs.WriteHEAD(repoDir, ""); err != nil {
 		return err
 	}
 
