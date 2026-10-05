@@ -18,8 +18,9 @@ const (
 	commitsDir        = "commits"
 	configFileName    = "config.json"
 	indexFileName     = "index.json"
-	mergeHEADFileName = "MERGE_HEAD"
 	mergeBaseFileName = "MERGE_BASE"
+	mergeHEADFileName = "MERGE_HEAD"
+	syncStateFileName = "SYNC_HEADS.json"
 )
 
 type Hash string
@@ -83,4 +84,8 @@ func MergeBasePath(dir string) string {
 
 func IndexPath(dir string) string {
 	return fitPath(dir, indexFileName)
+}
+
+func SyncStatePath(dir string) string {
+	return fitPath(dir, syncStateFileName)
 }

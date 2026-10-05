@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"fit/fit/internal"
 	"fit/fit/protocol"
@@ -14,6 +16,36 @@ func Serve(dir string, ctx context.Context) error {
 		return err
 	}
 
+	backoff := time.Second
+
+	for {
+		err := serveOnce(dir, ctx)
+
+		if ctx.Err() != nil {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+
+		case <-time.After(backoff):
+		}
+
+		if err == nil {
+			backoff = time.Second
+			continue
+		}
+
+		backoff *= 2
+
+		if backoff > 30*time.Second {
+			backoff = 30 * time.Second
+		}
+	}
+}
+
+func serveOnce(dir string, ctx context.Context) error {
 	config, err := internal.LoadConfig(dir)
 	if err != nil {
 		return err
@@ -25,7 +57,10 @@ func Serve(dir string, ctx context.Context) error {
 	}
 	defer t.Close()
 
-	discoverySub, err := t.Subscribe(ctx, transport.DiscoveryExchange)
+	discoverySub, err := t.Subscribe(
+		ctx,
+		transport.DiscoveryExchange,
+	)
 	if err != nil {
 		return err
 	}
@@ -40,13 +75,29 @@ func Serve(dir string, ctx context.Context) error {
 	}
 	defer repoSub.Close()
 
+	// every successful connection/reconnection publishes current HEAD.
+	if err := announceHead(dir, ctx, t); err != nil {
+		return err
+	}
+
+	go watchHead(dir, ctx, t)
+
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 
-		case delivery := <-discoverySub.Messages():
-			if err := handleDiscovery(dir, t, delivery, ctx); err != nil {
+		case delivery, ok := <-discoverySub.Messages():
+			if !ok {
+				return fmt.Errorf("discovery subscription closed")
+			}
+
+			if err := handleDiscovery(
+				dir,
+				t,
+				delivery,
+				ctx,
+			); err != nil {
 				if delivery.Nack != nil {
 					_ = delivery.Nack(false)
 				}
@@ -57,8 +108,17 @@ func Serve(dir string, ctx context.Context) error {
 				_ = delivery.Ack()
 			}
 
-		case delivery := <-repoSub.Messages():
-			if err := handleRepositoryRequest(dir, t, delivery, ctx); err != nil {
+		case delivery, ok := <-repoSub.Messages():
+			if !ok {
+				return fmt.Errorf("repository subscription closed")
+			}
+
+			if err := handleRepositoryRequest(
+				dir,
+				t,
+				delivery,
+				ctx,
+			); err != nil {
 				if delivery.Nack != nil {
 					_ = delivery.Nack(false)
 				}
@@ -159,6 +219,9 @@ func handleRepositoryRequest(
 	switch envelope.Type {
 	case protocol.HeadRequest:
 		return handleHeadRequest(dir, t, d, ctx)
+
+	case protocol.HeadAnnounce:
+		return handleHeadAnnounce(dir, envelope)
 
 	case protocol.CommitRequest:
 		return handleCommitRequest(dir, t, d, ctx, envelope)
@@ -283,6 +346,36 @@ func handleBlobRequest(
 	return reply(ctx, t, d, envelope)
 }
 
+func handleHeadAnnounce(
+	dir string,
+	envelope protocol.Envelope,
+) error {
+	config, err := internal.LoadConfig(dir)
+	if err != nil {
+		return err
+	}
+
+	if envelope.RepositoryID != config.RepositoryID {
+		return nil
+	}
+
+	if envelope.SenderPeerID == config.PeerID {
+		return nil
+	}
+
+	payload, err :=
+		protocol.Payload[protocol.HeadAnnouncePayload](envelope)
+	if err != nil {
+		return err
+	}
+
+	return internal.WritePeerRef(
+		dir,
+		envelope.SenderPeerID,
+		payload.Head,
+	)
+}
+
 func reply(
 	ctx context.Context,
 	t transport.Transport,
@@ -303,6 +396,80 @@ func reply(
 			Body:          data,
 			ContentType:   "application/json",
 			CorrelationID: d.CorrelationID,
+		},
+	)
+}
+
+func watchHead(
+	dir string,
+	ctx context.Context,
+	t transport.Transport,
+) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	var last internal.CommitID
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case <-ticker.C:
+			head, err := internal.ReadHEAD(dir)
+			if err != nil {
+				continue
+			}
+
+			if head == last {
+				continue
+			}
+
+			last = head
+
+			_ = announceHead(dir, ctx, t)
+		}
+	}
+}
+
+func announceHead(
+	dir string,
+	ctx context.Context,
+	t transport.Transport,
+) error {
+	config, err := internal.LoadConfig(dir)
+	if err != nil {
+		return err
+	}
+
+	head, err := internal.ReadHEAD(dir)
+	if err != nil {
+		return err
+	}
+
+	envelope, err := protocol.NewEnvelope(
+		protocol.HeadAnnounce,
+		config.RepositoryID,
+		config.PeerID,
+		protocol.HeadAnnouncePayload{
+			Head: head,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	body, err := json.Marshal(envelope)
+	if err != nil {
+		return err
+	}
+
+	return t.Publish(
+		ctx,
+		transport.RepositoryExchange(config.RepositoryID),
+		transport.Message{
+			Body:        body,
+			ContentType: "application/json",
 		},
 	)
 }

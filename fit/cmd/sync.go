@@ -26,6 +26,16 @@ func Sync(dir string, ctx context.Context) error {
 	}
 	defer t.Close()
 
+	// First resume previous incomplete syncs.
+	if err := resumeIncompleteSyncs(
+		dir,
+		ctx,
+		t,
+		config.RepositoryID,
+	); err != nil {
+		return err
+	}
+
 	envelope, err := protocol.NewEnvelope(
 		protocol.RepositoryDiscover,
 		config.RepositoryID,
@@ -83,6 +93,16 @@ func Sync(dir string, ctx context.Context) error {
 
 		found = true
 
+		// Persist intent BEFORE downloading.
+		if err := internal.MarkSyncHead(
+			dir,
+			offer.PeerID,
+			offer.Head,
+			false,
+		); err != nil {
+			return err
+		}
+
 		if err := FetchHead(
 			dir,
 			ctx,
@@ -104,10 +124,70 @@ func Sync(dir string, ctx context.Context) error {
 		); err != nil {
 			return err
 		}
+
+		if err := internal.MarkSyncHead(
+			dir,
+			offer.PeerID,
+			offer.Head,
+			true,
+		); err != nil {
+			return err
+		}
 	}
 
 	if !found {
 		return fmt.Errorf("no remote peers found")
+	}
+
+	return nil
+}
+
+func resumeIncompleteSyncs(
+	dir string,
+	ctx context.Context,
+	t transport.Transport,
+	repositoryID internal.RepositoryID,
+) error {
+	state, err := internal.LoadSyncState(dir)
+	if err != nil {
+		return err
+	}
+
+	for peerID, head := range state.Heads {
+		if head.Complete {
+			continue
+		}
+
+		if err := FetchHead(
+			dir,
+			ctx,
+			t,
+			repositoryID,
+			head.CommitID,
+		); err != nil {
+			return fmt.Errorf(
+				"resume sync peer %s: %w",
+				peerID,
+				err,
+			)
+		}
+
+		if err := internal.WritePeerRef(
+			dir,
+			peerID,
+			head.CommitID,
+		); err != nil {
+			return err
+		}
+
+		if err := internal.MarkSyncHead(
+			dir,
+			peerID,
+			head.CommitID,
+			true,
+		); err != nil {
+			return err
+		}
 	}
 
 	return nil
