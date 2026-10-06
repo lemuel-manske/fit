@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"bytes"
 	"testing"
 
 	"fit/fit/fs"
@@ -231,4 +232,41 @@ func TestStatusIgnoresDotFit(t *testing.T) {
 	require.Empty(t, status.StagedDeleted)
 	require.Empty(t, status.StagedModified)
 	require.Empty(t, status.Untracked)
+}
+
+
+func TestStatusShowsRemoteHeadBehindAndMergeAction(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, Init(dir, "test"))
+
+	_, err := fs.WriteFile(dir, "test.txt", "base")
+	require.NoError(t, err)
+	require.NoError(t, Add(dir, "test.txt"))
+
+	baseID, err := CommitChanges(dir, "base")
+	require.NoError(t, err)
+
+	_, err = fs.WriteFile(dir, "test.txt", "remote")
+	require.NoError(t, err)
+	require.NoError(t, Add(dir, "test.txt"))
+
+	remoteID, err := CommitChanges(dir, "remote")
+	require.NoError(t, err)
+
+	require.NoError(t, Checkout(dir, baseID))
+	require.NoError(t, fs.WritePeerRef(dir, fs.PeerID("peer-2"), remoteID))
+
+	status, err := GetStatus(dir)
+	require.NoError(t, err)
+	require.Len(t, status.Remotes, 1)
+	require.Equal(t, RelationBehind, status.Remotes[0].Relation)
+	require.Equal(t, remoteID, status.Remotes[0].Head)
+
+	var out bytes.Buffer
+	status.Print(&out)
+
+	require.Contains(t, out.String(), "Remote heads:")
+	require.Contains(t, out.String(), "behind")
+	require.Contains(t, out.String(), "fit merge "+string(remoteID))
 }
