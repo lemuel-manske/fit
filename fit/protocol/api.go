@@ -1,3 +1,4 @@
+// Package protocol defines the message types and payloads used for communication between peers in the Fit "protocol".
 package protocol
 
 import (
@@ -10,11 +11,11 @@ import (
 	"github.com/google/uuid"
 )
 
-const GlobalProtocolVersion = 1
-
 type MessageType string
 
 const (
+	GlobalProtocolVersion = 1
+
 	RepositoryDiscover MessageType = "repository.discover"
 	RepositoryOffer    MessageType = "repository.offer"
 

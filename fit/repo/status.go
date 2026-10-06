@@ -244,6 +244,7 @@ func GetStatus(dir string) (*Status, error) {
 	slices.Sort(status.Modified)
 	slices.Sort(status.Deleted)
 	slices.Sort(status.Untracked)
+
 	slices.SortFunc(status.Remotes, func(a, b RemoteStatus) int {
 		if a.PeerID < b.PeerID {
 			return -1
