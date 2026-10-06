@@ -27,7 +27,7 @@ func Sync(dir string, ctx context.Context) (*SyncResult, error) {
 		return nil, err
 	}
 
-	t, err := transport.NewRabbitMQ(RemoteURL)
+	t, err := transport.NewRabbitMQ()
 	if err != nil {
 		return nil, err
 	}

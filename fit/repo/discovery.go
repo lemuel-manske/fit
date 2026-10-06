@@ -12,7 +12,7 @@ func DiscoverAll(
 	dir string,
 	ctx context.Context,
 ) (<-chan protocol.RepositoryOfferPayload, error) {
-	t, err := transport.NewRabbitMQ(RemoteURL)
+	t, err := transport.NewRabbitMQ()
 	if err != nil {
 		return nil, err
 	}

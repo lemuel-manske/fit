@@ -3,6 +3,7 @@ package transport
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -13,7 +14,19 @@ type RabbitMQ struct {
 	ch   *amqp.Channel
 }
 
-func NewRabbitMQ(url string) (Transport, error) {
+func loadURL() string {
+	url := "amqp://guest:guest@localhost:5672/"
+
+	if envURL := os.Getenv("FIT_BROKER_URL"); envURL != "" {
+		url = envURL
+	}
+
+	return url
+}
+
+func NewRabbitMQ() (Transport, error) {
+	url := loadURL()
+
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err

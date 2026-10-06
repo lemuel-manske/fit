@@ -52,7 +52,7 @@ func serveOnce(dir string, ctx context.Context) error {
 		return err
 	}
 
-	t, err := transport.NewRabbitMQ(RemoteURL)
+	t, err := transport.NewRabbitMQ()
 	if err != nil {
 		return err
 	}
