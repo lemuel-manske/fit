@@ -1,9 +1,10 @@
 package fs
 
 import (
-	"encoding/json"
 	"errors"
 	"os"
+
+	"encoding/json"
 	"path/filepath"
 )
 
@@ -17,7 +18,7 @@ func WritePeerRef(
 	peerID PeerID,
 	commitID CommitID,
 ) error {
-	refDir := filepath.Join(dir, ".fit", "refs", "peers")
+	refDir := PeerRefsPath(dir)
 
 	if err := os.MkdirAll(refDir, 0755); err != nil {
 		return err
@@ -39,7 +40,7 @@ func WritePeerRef(
 }
 
 func ReadPeerRefs(dir string) ([]PeerRef, error) {
-	refDir := filepath.Join(dir, ".fit", "refs", "peers")
+	refDir := PeerRefsPath(dir)
 
 	entries, err := os.ReadDir(refDir)
 	if err != nil {
@@ -63,7 +64,7 @@ func ReadPeerRefs(dir string) ([]PeerRef, error) {
 		}
 
 		var ref PeerRef
-		if err := json.Unmarshal(data, &ref); err != nil {
+		if err = json.Unmarshal(data, &ref); err != nil {
 			return nil, err
 		}
 

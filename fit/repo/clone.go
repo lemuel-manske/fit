@@ -95,7 +95,7 @@ func Clone(
 		return fmt.Errorf("repository not found: %s", selector)
 	}
 
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err = os.MkdirAll(targetDir, 0755); err != nil {
 		return err
 	}
 
@@ -107,11 +107,11 @@ func Clone(
 		URL:            RemoteURL,
 	}
 
-	if err := InitWithConfig(targetDir, config); err != nil {
+	if err = InitWithConfig(targetDir, config); err != nil {
 		return err
 	}
 
-	if err := FetchHead(
+	if err = FetchHead(
 		targetDir,
 		ctx,
 		t,

@@ -234,7 +234,6 @@ func TestStatusIgnoresDotFit(t *testing.T) {
 	require.Empty(t, status.Untracked)
 }
 
-
 func TestStatusShowsRemoteHeadBehindAndMergeAction(t *testing.T) {
 	dir := t.TempDir()
 
