@@ -73,3 +73,7 @@ func IndexPath(dir string) string {
 func SyncStatePath(dir string) string {
 	return fitPath(dir, syncStateFileName)
 }
+
+func PeerRefsPath(dir string) string {
+	return fitPath(dir, filepath.Join("refs", "peers"))
+}
