@@ -2,6 +2,7 @@ package fs
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 )
@@ -35,4 +36,39 @@ func WritePeerRef(
 		data,
 		0644,
 	)
+}
+
+func ReadPeerRefs(dir string) ([]PeerRef, error) {
+	refDir := filepath.Join(dir, ".fit", "refs", "peers")
+
+	entries, err := os.ReadDir(refDir)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return []PeerRef{}, nil
+		}
+
+		return nil, err
+	}
+
+	refs := make([]PeerRef, 0, len(entries))
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		data, err := os.ReadFile(filepath.Join(refDir, entry.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		var ref PeerRef
+		if err := json.Unmarshal(data, &ref); err != nil {
+			return nil, err
+		}
+
+		refs = append(refs, ref)
+	}
+
+	return refs, nil
 }
