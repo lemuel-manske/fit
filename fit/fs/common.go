@@ -18,6 +18,8 @@ const (
 	indexFileName     = "index.json"
 	mergeBaseFileName = "MERGE_BASE"
 	mergeHEADFileName = "MERGE_HEAD"
+	peersDir          = "peers"
+	refsDir           = "refs"
 	syncStateFileName = "SYNC_HEADS.json"
 )
 
@@ -75,5 +77,5 @@ func SyncStatePath(dir string) string {
 }
 
 func PeerRefsPath(dir string) string {
-	return fitPath(dir, filepath.Join("refs", "peers"))
+	return fitPath(dir, filepath.Join(refsDir, peersDir))
 }
