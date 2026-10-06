@@ -8,6 +8,75 @@ Para controlar as expectativas, vamos considerar que essa especificação se apl
 
 As definições a seguir fazem comparação de conceitos entre Git e FIT, como blobs, commits, etc.
 
+## Build e execução com Docker Bake
+
+Requisito: Docker com Buildx/Bake (incluído no Docker Desktop). No Windows,
+use o modo de containers Linux. Não é necessário instalar Go no host.
+
+Na raiz deste projeto, compile as duas versões:
+
+```sh
+docker buildx bake
+```
+
+Os executáveis são exportados diretamente para o host:
+
+- Linux amd64: `dist/linux-amd64/fit`;
+- Windows amd64: `dist/windows-amd64/fit.exe`.
+
+Para compilar apenas uma versão, use `docker buildx bake linux-amd64` ou
+`docker buildx bake windows-amd64`.
+
+O `docker-bake.hcl` encadeia `.bake/setup-env.dockerfile` (Go),
+`.bake/setup-workspace.dockerfile` (dependências e fontes) e
+`.bake/build.dockerfile` (compilação e exportação). Ambos os builds executam
+em Linux; `GOOS` e `GOARCH` selecionam o destino do executável, inclusive Windows.
+
+Inicie o RabbitMQ separadamente:
+
+```sh
+docker compose up -d --build --wait rabbitmq
+```
+
+O `Dockerfile.rabbitmq` usa a imagem oficial com uma verificação de saúde.
+A configuração local mantém `guest`/`guest`, compatível com o endereço padrão
+do FIT, `amqp://guest:guest@localhost:5672`. As portas ficam restritas ao host.
+A interface de gerenciamento está em http://localhost:15672.
+
+O diretório do código-fonte serve apenas para compilar. Execute o binário
+no diretório dos arquivos que deseja versionar. Por exemplo, no PowerShell,
+partindo da raiz deste projeto:
+
+```powershell
+$fit = (Resolve-Path .\dist\windows-amd64\fit.exe).Path
+New-Item -ItemType Directory -Force "$HOME\fit-demo" | Out-Null
+Set-Location "$HOME\fit-demo"
+& $fit init demo
+& $fit status
+& $fit serve
+```
+
+No Linux, partindo da raiz deste projeto:
+
+```sh
+FIT_BIN="$(pwd)/dist/linux-amd64/fit"
+mkdir -p "$HOME/fit-demo"
+cd "$HOME/fit-demo"
+"$FIT_BIN" init demo
+"$FIT_BIN" status
+"$FIT_BIN" serve
+```
+
+`serve` fica em primeiro plano até Ctrl+C. Em outro terminal, execute os
+outros comandos no mesmo diretório do peer. Os arquivos e `.fit` permanecem
+no host; RabbitMQ transporta mensagens entre os peers. Para outro peer,
+use outro diretório e `clone` em vez de `init`, mantendo o primeiro online.
+
+Para encerrar o broker, execute `docker compose down` na raiz do projeto.
+Os volumes são preservados. Para apenas executar o FIT, seu professor precisa
+do binário Windows e do setup do RabbitMQ; não precisa do Go nem das variáveis
+`FIT_UID`, `FIT_GID` ou `FIT_WORKDIR`.
+
 ## Objetivo
 
 - commits e histórico em DAG (vide [`## Modelo de histórico`](#modelo-de-histórico));
