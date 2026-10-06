@@ -4,36 +4,41 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
+	"time"
 
 	"fit/fit/fs"
 	"fit/fit/protocol"
 	"fit/fit/transport"
 )
 
-func Sync(dir string, ctx context.Context) error {
+type SyncResult struct {
+	Remotes []RemoteStatus
+}
+
+func Sync(dir string, ctx context.Context) (*SyncResult, error) {
 	if err := fs.RequireInitialized(dir); err != nil {
-		return err
+		return nil, err
 	}
 
 	config, err := fs.LoadConfig(dir)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	t, err := transport.NewRabbitMQ(config.URL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer t.Close()
 
-	// first resume previous incomplete syncs.
 	if err = resumeIncompleteSyncs(
 		dir,
 		ctx,
 		t,
 		config.RepositoryID,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	envelope, err := protocol.NewEnvelope(
@@ -45,16 +50,19 @@ func Sync(dir string, ctx context.Context) error {
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	body, err := json.Marshal(envelope)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	discoveryCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	responses, err := t.Request(
-		ctx,
+		discoveryCtx,
 		transport.DiscoveryExchange,
 		transport.Message{
 			Body:        body,
@@ -62,10 +70,19 @@ func Sync(dir string, ctx context.Context) error {
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	found := false
+	headID, err := fs.ReadHEAD(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &SyncResult{
+		Remotes: []RemoteStatus{},
+	}
+
+	seen := map[fs.PeerID]bool{}
 
 	for response := range responses {
 		envelope, err := protocol.Decode(response.Body)
@@ -87,20 +104,19 @@ func Sync(dir string, ctx context.Context) error {
 			continue
 		}
 
-		if offer.PeerID == config.PeerID {
+		if offer.PeerID == config.PeerID || seen[offer.PeerID] {
 			continue
 		}
 
-		found = true
+		seen[offer.PeerID] = true
 
-		// persist intent BEFORE downloading.
 		if err = fs.MarkSyncHead(
 			dir,
 			offer.PeerID,
 			offer.Head,
 			false,
 		); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err = FetchHead(
@@ -110,7 +126,7 @@ func Sync(dir string, ctx context.Context) error {
 			config.RepositoryID,
 			offer.Head,
 		); err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"sync peer %s: %w",
 				offer.PeerID,
 				err,
@@ -122,7 +138,7 @@ func Sync(dir string, ctx context.Context) error {
 			offer.PeerID,
 			offer.Head,
 		); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err = fs.MarkSyncHead(
@@ -131,15 +147,36 @@ func Sync(dir string, ctx context.Context) error {
 			offer.Head,
 			true,
 		); err != nil {
-			return err
+			return nil, err
 		}
+
+		relation, err := commitRelation(dir, headID, offer.Head)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Remotes = append(result.Remotes, RemoteStatus{
+			PeerID:   offer.PeerID,
+			Head:     offer.Head,
+			Relation: relation,
+		})
 	}
 
-	if !found {
-		return fmt.Errorf("no remote peers found")
+	if len(result.Remotes) == 0 {
+		return nil, fmt.Errorf("no remote peers found")
 	}
 
-	return nil
+	slices.SortFunc(result.Remotes, func(a, b RemoteStatus) int {
+		if a.PeerID < b.PeerID {
+			return -1
+		}
+		if a.PeerID > b.PeerID {
+			return 1
+		}
+		return 0
+	})
+
+	return result, nil
 }
 
 func resumeIncompleteSyncs(
