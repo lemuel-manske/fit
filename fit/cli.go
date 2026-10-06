@@ -345,7 +345,32 @@ func NewSyncCmd() *cobra.Command {
 			)
 			defer cancel()
 
-			return repo.Sync(dir, ctx)
+			result, err := repo.Sync(dir, ctx)
+			if err != nil {
+				return err
+			}
+
+			out := cmd.OutOrStdout()
+			fmt.Fprintln(out, "Sync complete.")
+
+			for _, remote := range result.Remotes {
+				fmt.Fprintf(
+					out,
+					"  peer %s: %s (%s)\n",
+					remote.PeerID,
+					remote.Head,
+					remote.Relation,
+				)
+
+				switch remote.Relation {
+				case repo.RelationBehind, repo.RelationDiverged:
+					fmt.Fprintf(out, "    run: fit merge %s\n", remote.Head)
+				case repo.RelationUnknown:
+					fmt.Fprintln(out, "    run: fit sync")
+				}
+			}
+
+			return nil
 		},
 	}
 
