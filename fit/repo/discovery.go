@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"fit/fit/fs"
 	"fit/fit/protocol"
 	"fit/fit/transport"
 )
@@ -13,16 +12,7 @@ func DiscoverAll(
 	dir string,
 	ctx context.Context,
 ) (<-chan protocol.RepositoryOfferPayload, error) {
-	if err := fs.RequireInitialized(dir); err != nil {
-		return nil, err
-	}
-
-	config, err := fs.LoadConfig(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	t, err := transport.NewRabbitMQ(config.URL)
+	t, err := transport.NewRabbitMQ(RemoteURL)
 	if err != nil {
 		return nil, err
 	}

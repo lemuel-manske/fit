@@ -268,11 +268,6 @@ func NewReposCmd() *cobra.Command {
 				return err
 			}
 
-			config, err := fs.LoadConfig(dir)
-			if err != nil {
-				return err
-			}
-
 			ctx, cancel := context.WithTimeout(
 				cmd.Context(),
 				timeout,
@@ -297,7 +292,9 @@ func NewReposCmd() *cobra.Command {
 
 				name := offer.RepositoryName
 
-				if offer.PeerID == config.PeerID {
+				config, _ := fs.LoadConfig(dir)
+
+				if config != nil && offer.PeerID == config.PeerID {
 					name += " (You)"
 				}
 

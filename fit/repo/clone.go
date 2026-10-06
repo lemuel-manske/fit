@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"encoding/json"
 
@@ -23,15 +24,17 @@ func Clone(
 	if err != nil {
 		return err
 	}
-
 	defer t.Close()
+
+	discoveryCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
 
 	envelope, err := protocol.NewEnvelope(
 		protocol.RepositoryDiscover,
-		"",                                   // no repository ID for discovery
-		"",                                   // no peer ID for discovery
-		protocol.RepositoryDiscoverPayload{}, // no filters for discovery
-	)
+		"",
+		"",
+		protocol.RepositoryDiscoverPayload{},
+	) // do not apply any filters (retrieve all)
 	if err != nil {
 		return err
 	}
@@ -42,7 +45,7 @@ func Clone(
 	}
 
 	responses, err := t.Request(
-		ctx,
+		discoveryCtx,
 		transport.DiscoveryExchange,
 		transport.Message{
 			Body:        body,
@@ -92,28 +95,23 @@ func Clone(
 		return fmt.Errorf("repository not found: %s", selector)
 	}
 
-	if err = os.MkdirAll(targetDir, 0755); err != nil {
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return err
 	}
 
-	newPeerID := fs.PeerID(uuid.NewString())
-
 	config := &fs.Config{
 		FormatVersion:  fs.GlobalFormatVersion,
-		PeerID:         newPeerID,
+		PeerID:         fs.PeerID(uuid.NewString()),
 		RepositoryID:   selected.RepositoryID,
 		RepositoryName: selected.RepositoryName,
 		URL:            RemoteURL,
 	}
 
-	if err = InitWithConfig(
-		targetDir,
-		config,
-	); err != nil {
+	if err := InitWithConfig(targetDir, config); err != nil {
 		return err
 	}
 
-	if err = FetchHead(
+	if err := FetchHead(
 		targetDir,
 		ctx,
 		t,
@@ -123,12 +121,5 @@ func Clone(
 		return err
 	}
 
-	if err = fs.WriteHEAD(
-		targetDir,
-		selected.Head,
-	); err != nil {
-		return err
-	}
-
-	return Checkout(targetDir, selected.Head)
+	return ForceCheckout(targetDir, selected.Head)
 }
