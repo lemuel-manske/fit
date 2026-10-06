@@ -1,17 +1,19 @@
 services:
   rabbitmq:
-    image: rabbitmq:4-management
-    container_name: rabbitmq
+    build:
+      context: .
+      dockerfile: Dockerfile.rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
       - rabbitmq_log:/var/log/rabbitmq
- 
+    restart: unless-stopped
+
 volumes:
   rabbitmq_data:
   rabbitmq_log:
