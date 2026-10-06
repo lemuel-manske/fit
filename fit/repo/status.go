@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"fmt"
 	"io"
 	"slices"
 
@@ -13,6 +14,12 @@ const (
 	reset = "\033[0m"
 )
 
+type RemoteStatus struct {
+	PeerID   fs.PeerID
+	Head     fs.CommitID
+	Relation CommitRelation
+}
+
 type Status struct {
 	MergeInProgress bool
 
@@ -22,6 +29,8 @@ type Status struct {
 	Modified  []string
 	Deleted   []string
 	Untracked []string
+
+	Remotes []RemoteStatus
 }
 
 func (s *Status) IsClean() bool {
@@ -77,6 +86,29 @@ func (s *Status) Print(writer io.Writer) {
 	if s.IsClean() {
 		_, _ = writer.Write([]byte(green + "Working tree clean\n" + reset))
 	}
+
+	if len(s.Remotes) == 0 {
+		return
+	}
+
+	_, _ = writer.Write([]byte("\nRemote heads:\n"))
+
+	for _, remote := range s.Remotes {
+		_, _ = fmt.Fprintf(
+			writer,
+			"  %s  %s  %s\n",
+			remote.PeerID,
+			remote.Relation,
+			remote.Head,
+		)
+
+		switch remote.Relation {
+		case RelationBehind, RelationDiverged:
+			_, _ = fmt.Fprintf(writer, "    run: fit merge %s\n", remote.Head)
+		case RelationUnknown:
+			_, _ = writer.Write([]byte("    run: fit sync\n"))
+		}
+	}
 }
 
 func GetStatus(dir string) (*Status, error) {
@@ -91,6 +123,7 @@ func GetStatus(dir string) (*Status, error) {
 		Modified:       []string{},
 		Deleted:        []string{},
 		Untracked:      []string{},
+		Remotes:        []RemoteStatus{},
 	}
 
 	status.MergeInProgress = fs.MergeInProgress(dir)
@@ -188,11 +221,38 @@ func GetStatus(dir string) (*Status, error) {
 		}
 	}
 
+	refs, err := fs.ReadPeerRefs(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ref := range refs {
+		relation, err := commitRelation(dir, headID, ref.CommitID)
+		if err != nil {
+			return nil, err
+		}
+
+		status.Remotes = append(status.Remotes, RemoteStatus{
+			PeerID:   ref.PeerID,
+			Head:     ref.CommitID,
+			Relation: relation,
+		})
+	}
+
 	slices.Sort(status.StagedModified)
 	slices.Sort(status.StagedDeleted)
 	slices.Sort(status.Modified)
 	slices.Sort(status.Deleted)
 	slices.Sort(status.Untracked)
+	slices.SortFunc(status.Remotes, func(a, b RemoteStatus) int {
+		if a.PeerID < b.PeerID {
+			return -1
+		}
+		if a.PeerID > b.PeerID {
+			return 1
+		}
+		return 0
+	})
 
 	return status, nil
 }
