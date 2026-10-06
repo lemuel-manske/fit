@@ -8,21 +8,24 @@ Para controlar as expectativas, vamos considerar que essa especificação se apl
 
 As definições a seguir fazem comparação de conceitos entre Git e FIT, como blobs, commits, etc.
 
-## Build e execução com Docker
+## Integração com Docker
 
 Requer Docker com Buildx/Bake; no Windows, use Docker Desktop com containers Linux.
-Não é necessário instalar Go. Na raiz do projeto:
+
+Não é necessário instalar Go.
+
+Na raiz do projeto:
 
 ```sh
 docker buildx bake
 docker compose up -d --build --wait rabbitmq
 ```
 
-Binários: `dist/linux-amd64/fit` e `dist/windows-amd64/fit.exe`.
-Para compilar só uma versão: `docker buildx bake linux-amd64` ou
+> Para compilar só uma versão: `docker buildx bake linux-amd64` ou
 `docker buildx bake windows-amd64`.
 
 Execute o binário no diretório dos arquivos que deseja versionar.
+
 No PowerShell, partindo da raiz do projeto:
 
 ```powershell
@@ -33,14 +36,15 @@ Set-Location "$HOME\fit-demo"
 & $fit serve
 ```
 
-No Linux, obtenha o caminho absoluto com `FIT_BIN="$(pwd)/dist/linux-amd64/fit"`,
-entre no diretório desejado e execute `"$FIT_BIN" init demo` e `"$FIT_BIN" serve`.
+No Linux:
 
-Mantenha `serve` aberto; use outro terminal no mesmo diretório para os demais comandos.
-Cada peer usa um diretório próprio; para entrar no mesmo repositório, use `clone`.
-Os arquivos e `.fit` ficam no host. RabbitMQ usa `localhost:5672`;
-painel em http://localhost:15672 com `guest`/`guest`.
-Para parar o broker, rode `docker compose down` na raiz do projeto; os volumes permanecem.
+```bash
+fit=$(realpath dist/linux-amd64/fit)
+mkdir -p ~/fit-demo
+cd ~/fit-demo
+$fit init demo
+$fit serve
+```
 
 ## Objetivo
 
