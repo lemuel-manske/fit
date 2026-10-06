@@ -17,7 +17,6 @@ type Config struct {
 	RepositoryID   RepositoryID `json:"repositoryId"`
 	PeerID         PeerID       `json:"peerId"`
 	RepositoryName string       `json:"repositoryName"`
-	URL            string       `json:"url"`
 }
 
 func (c *Config) UnmarshalJSON(data []byte) error {

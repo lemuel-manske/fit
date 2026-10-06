@@ -2,10 +2,11 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
 	"time"
+
+	"encoding/json"
 
 	"fit/fit/fs"
 	"fit/fit/protocol"
@@ -26,7 +27,7 @@ func Sync(dir string, ctx context.Context) (*SyncResult, error) {
 		return nil, err
 	}
 
-	t, err := transport.NewRabbitMQ(config.URL)
+	t, err := transport.NewRabbitMQ(RemoteURL)
 	if err != nil {
 		return nil, err
 	}

@@ -2,9 +2,10 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
+
+	"encoding/json"
 
 	"fit/fit/fs"
 	"fit/fit/protocol"
@@ -51,7 +52,7 @@ func serveOnce(dir string, ctx context.Context) error {
 		return err
 	}
 
-	t, err := transport.NewRabbitMQ(config.URL)
+	t, err := transport.NewRabbitMQ(RemoteURL)
 	if err != nil {
 		return err
 	}

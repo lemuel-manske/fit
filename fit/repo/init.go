@@ -13,7 +13,6 @@ func Init(repoDir string, repoName string) error {
 		PeerID:         fs.PeerID(uuid.New().String()),
 		RepositoryID:   fs.RepositoryID(uuid.New().String()),
 		RepositoryName: repoName,
-		URL:            RemoteURL,
 	}
 
 	return InitWithConfig(repoDir, config)

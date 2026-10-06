@@ -104,7 +104,6 @@ func Clone(
 		PeerID:         fs.PeerID(uuid.NewString()),
 		RepositoryID:   selected.RepositoryID,
 		RepositoryName: selected.RepositoryName,
-		URL:            RemoteURL,
 	}
 
 	if err = InitWithConfig(targetDir, config); err != nil {
