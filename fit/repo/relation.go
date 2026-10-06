@@ -26,12 +26,19 @@ func commitRelation(
 		return RelationSame, nil
 	}
 
-	if local == "" {
-		return RelationBehind, nil
-	}
-
 	if remote == "" {
 		return RelationAhead, nil
+	}
+
+	if _, err := fs.NewCommitStore(dir).Get(remote); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return RelationUnknown, nil
+		}
+		return "", err
+	}
+
+	if local == "" {
+		return RelationBehind, nil
 	}
 
 	localIsAncestor, err := fs.IsAncestor(dir, remote, local)
