@@ -1,6 +1,11 @@
 package repo
 
-import "fit/fit/fs"
+import (
+	"errors"
+	"os"
+
+	"fit/fit/fs"
+)
 
 type CommitRelation string
 
@@ -9,6 +14,7 @@ const (
 	RelationAhead    CommitRelation = "ahead"
 	RelationBehind   CommitRelation = "behind"
 	RelationDiverged CommitRelation = "diverged"
+	RelationUnknown  CommitRelation = "unknown"
 )
 
 func commitRelation(
@@ -20,8 +26,19 @@ func commitRelation(
 		return RelationSame, nil
 	}
 
+	if local == "" {
+		return RelationBehind, nil
+	}
+
+	if remote == "" {
+		return RelationAhead, nil
+	}
+
 	localIsAncestor, err := fs.IsAncestor(dir, remote, local)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return RelationUnknown, nil
+		}
 		return "", err
 	}
 
@@ -31,6 +48,9 @@ func commitRelation(
 
 	remoteIsAncestor, err := fs.IsAncestor(dir, local, remote)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return RelationUnknown, nil
+		}
 		return "", err
 	}
 
