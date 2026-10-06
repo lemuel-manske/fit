@@ -82,6 +82,7 @@ func Decode(data []byte) (Envelope, error) {
 	return envelope, nil
 }
 
+// Payload decodes the payload of an envelope into the specified type T.
 func Payload[T any](envelope Envelope) (T, error) {
 	var value T
 

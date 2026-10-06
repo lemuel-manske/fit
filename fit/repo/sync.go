@@ -26,7 +26,7 @@ func Sync(dir string, ctx context.Context) error {
 	}
 	defer t.Close()
 
-	// First resume previous incomplete syncs.
+	// first resume previous incomplete syncs.
 	if err = resumeIncompleteSyncs(
 		dir,
 		ctx,
@@ -93,7 +93,7 @@ func Sync(dir string, ctx context.Context) error {
 
 		found = true
 
-		// Persist intent BEFORE downloading.
+		// persist intent BEFORE downloading.
 		if err = fs.MarkSyncHead(
 			dir,
 			offer.PeerID,

@@ -23,13 +23,14 @@ func Clone(
 	if err != nil {
 		return err
 	}
+
 	defer t.Close()
 
 	envelope, err := protocol.NewEnvelope(
 		protocol.RepositoryDiscover,
-		"",
-		"",
-		protocol.RepositoryDiscoverPayload{},
+		"",                                   // no repository ID for discovery
+		"",                                   // no peer ID for discovery
+		protocol.RepositoryDiscoverPayload{}, // no filters for discovery
 	)
 	if err != nil {
 		return err
@@ -83,8 +84,8 @@ func Clone(
 			)
 		}
 
-		copy := offer
-		selected = &copy
+		copied := offer
+		selected = &copied
 	}
 
 	if selected == nil {

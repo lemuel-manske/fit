@@ -187,7 +187,7 @@ func NewMergeCmd() *cobra.Command {
 
 func NewCheckoutCmd() *cobra.Command {
 	return &cobra.Command{
-		Use: "checkout [commit]",
+		Use: "checkout <commit>",
 
 		Short: "Checkout a specific commit",
 
@@ -232,9 +232,11 @@ func NewStatusCmd() *cobra.Command {
 
 func NewServeCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "serve",
+		Use: "serve",
+
 		Short: "Serve this FIT peer",
-		Args:  cobra.NoArgs,
+
+		Args: cobra.NoArgs,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir, err := os.Getwd()
@@ -254,9 +256,11 @@ func NewReposCmd() *cobra.Command {
 	var timeout time.Duration
 
 	cmd := &cobra.Command{
-		Use:   "repos",
+		Use: "repos",
+
 		Short: "Discover FIT repositories",
-		Args:  cobra.NoArgs,
+
+		Args: cobra.NoArgs,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir, err := os.Getwd()
@@ -326,9 +330,11 @@ func NewSyncCmd() *cobra.Command {
 	var timeout time.Duration
 
 	cmd := &cobra.Command{
-		Use:   "sync",
+		Use: "sync",
+
 		Short: "Synchronize objects from remote peers",
-		Args:  cobra.NoArgs,
+
+		Args: cobra.NoArgs,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir, err := os.Getwd()
@@ -360,9 +366,11 @@ func NewCloneCmd() *cobra.Command {
 	var timeout time.Duration
 
 	cmd := &cobra.Command{
-		Use:   "clone <repository> <directory>",
+		Use: "clone <repository> <directory>",
+
 		Short: "Clone a FIT repository",
-		Args:  cobra.ExactArgs(2),
+
+		Args: cobra.ExactArgs(2),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(
