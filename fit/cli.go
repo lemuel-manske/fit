@@ -234,7 +234,7 @@ func NewServeCmd() *cobra.Command {
 	return &cobra.Command{
 		Use: "serve",
 
-		Short: "Serve this FIT peer",
+		Short: "Serve this Fit peer",
 
 		Args: cobra.NoArgs,
 
@@ -258,7 +258,7 @@ func NewReposCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "repos",
 
-		Short: "Discover FIT repositories",
+		Short: "Discover Fit repositories",
 
 		Args: cobra.NoArgs,
 
@@ -390,7 +390,7 @@ func NewCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "clone <repository> <directory>",
 
-		Short: "Clone a FIT repository",
+		Short: "Clone a Fit repository",
 
 		Args: cobra.ExactArgs(2),
 

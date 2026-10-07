@@ -32,7 +32,7 @@ func TestRequireInitializedReturnsErrorWhenConfigMissing(t *testing.T) {
 	err := RequireInitialized(dir)
 
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "not a FIT repository; run 'fit init' first")
+	require.Contains(t, err.Error(), "not a Fit repository; run 'fit init' first")
 }
 
 func TestRequireInitializedReturnsNoErrorWhenConfigExists(t *testing.T) {

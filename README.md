@@ -1,12 +1,12 @@
-# FIT
+# Fit
 
-FIT é um sistema local de controle de versão distribuído.
+Fit é um sistema local de controle de versão distribuído.
 
 Ao final dessa especificação, encontra-se um glossário para os termos-chave.
 
 Para controlar as expectativas, vamos considerar que essa especificação se aplica para uma primeira versão do projeto, chamada ao longo desse documento de v1.
 
-As definições a seguir fazem comparação de conceitos entre Git e FIT, como blobs, commits, etc.
+As definições a seguir fazem comparação de conceitos entre Git e Fit, como blobs, commits, etc.
 
 ## Integração com Docker
 
@@ -55,13 +55,13 @@ $fit serve
 - divergência, merge e conflitos;
 - tolerância a falhas de peers e do transporte.
 
-O ambiente da v1 assume uma máquina, uma instância RabbitMQ, vários processos FIT e diretórios independentes.
+O ambiente da v1 assume uma máquina, uma instância RabbitMQ, vários processos Fit e diretórios independentes.
 
 ## Conceitos
 
 ### Peer
 
-Um peer é um diretório de trabalho que contém um diretório `.fit` e um processo FIT associado.
+Um peer é um diretório de trabalho que contém um diretório `.fit` e um processo Fit associado.
 
 A presença de `.fit` identifica o peer.
 
@@ -169,7 +169,7 @@ A topologia utiliza:
 
 * uma exchange global `fit.discovery`, para descoberta de repositórios;
 * uma exchange `fit.repo.<repositoryId>` por repositório;
-* uma fila efêmera por processo FIT conectado;
+* uma fila efêmera por processo Fit conectado;
 * filas temporárias de resposta (`reply-to`) para operações como `clone` e `sync`.
 
 ### Visão geral
@@ -186,7 +186,7 @@ flowchart LR
     QB --> B
 ```
 
-A **exchange** recebe mensagens e as distribui para as filas associadas. Cada processo FIT consome sua própria fila temporária.
+A **exchange** recebe mensagens e as distribui para as filas associadas. Cada processo Fit consome sua própria fila temporária.
 
 ### Descoberta
 
@@ -718,4 +718,4 @@ A v1 está completa quando:
 
 ## Glossário
 
-- DAG: Directed Acyclic Graph, grafo acíclico direcionado. No FIT, o histórico de commits forma um DAG, onde cada commit aponta para seus pais, e não há ciclos.
+- DAG: Directed Acyclic Graph, grafo acíclico direcionado. No Fit, o histórico de commits forma um DAG, onde cada commit aponta para seus pais, e não há ciclos.

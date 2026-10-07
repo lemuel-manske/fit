@@ -12,5 +12,5 @@ fmt:
 
 check: fmt test
 
-start-mom:
-	docker compose down && docker compose up
+copy-linux-binary:
+	sudo cp ./dist/linux-amd64/fit /usr/local/bin/fit

@@ -15,7 +15,7 @@ func RequireInitialized(dir string) error {
 
 	if _, err := os.Stat(configPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("not a FIT repository; run 'fit init' first")
+			return fmt.Errorf("not a Fit repository; run 'fit init' first")
 		}
 
 		return err
