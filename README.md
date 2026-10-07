@@ -1,5 +1,7 @@
 # Fit
 
+https://github.com/user-attachments/assets/440e14dd-066b-496a-ba32-7b914aba34f2
+
 Fit é um sistema local de controle de versão distribuído.
 
 Ao final dessa especificação, encontra-se um glossário para os termos-chave.
