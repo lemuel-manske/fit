@@ -274,4 +274,3 @@ func fetchBlob(
 
 	return fmt.Errorf("blob not found: %s", hash)
 }
-
