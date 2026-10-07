@@ -2,3 +2,7 @@
 **/.fit/**
 **/lab/**
 **/dist/**
+
+
+.env
+docker/certs/
