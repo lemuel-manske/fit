@@ -96,13 +96,23 @@ func (r *RabbitMQ) Subscribe(
 		return nil, err
 	}
 
+	if err = ensureDeadLetters(ch); err != nil {
+		_ = ch.Close()
+		return nil, err
+	}
+
+	if err = ch.Qos(16, 0, false); err != nil {
+		_ = ch.Close()
+		return nil, err
+	}
+
 	queue, err := ch.QueueDeclare(
 		"",    // let RabbitMQ generate a unique queue name
 		false, // durable
 		true,  // autoDelete
 		true,  // exclusive
 		false, // noWait
-		nil,
+		amqp.Table{"x-dead-letter-exchange": "fit.dlx"},
 	)
 	if err != nil {
 		_ = ch.Close()
@@ -156,7 +166,7 @@ func (r *RabbitMQ) Subscribe(
 					headers[key] = fmt.Sprint(value)
 				}
 
-				out <- Delivery{
+				delivery := Delivery{
 					Message: Message{
 						Body:          d.Body,
 						ContentType:   d.ContentType,
@@ -170,6 +180,11 @@ func (r *RabbitMQ) Subscribe(
 					Nack: func(requeue bool) error {
 						return d.Nack(false, requeue)
 					},
+				}
+				select {
+				case out <- delivery:
+				case <-ctx.Done():
+					return
 				}
 			}
 		}
@@ -334,3 +349,17 @@ func messageHeaders(message Message) amqp.Table {
 	return headers
 }
 
+
+func ensureDeadLetters(ch *amqp.Channel) error {
+	if err := ch.ExchangeDeclare("fit.dlx", "fanout", true, false, false, false, nil); err != nil {
+		return err
+	}
+	queue, err := ch.QueueDeclare("fit.dlq", true, false, false, false, amqp.Table{
+		"x-message-ttl": int32(86400000),
+		"x-max-length": int32(10000),
+	})
+	if err != nil {
+		return err
+	}
+	return ch.QueueBind(queue.Name, "", "fit.dlx", false, nil)
+}
