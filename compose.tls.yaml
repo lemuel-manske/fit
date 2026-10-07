@@ -1,7 +1,0 @@
-services:
-  rabbitmq:
-    ports:
-      - "127.0.0.1:5671:5671"
-    volumes:
-      - ./docker/rabbitmq.tls.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./docker/certs:/etc/rabbitmq/certs:ro
