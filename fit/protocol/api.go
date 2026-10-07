@@ -123,8 +123,3 @@ type CommitResponsePayload struct {
 type BlobRequestPayload struct {
 	Hash fs.Hash `json:"hash"`
 }
-
-type BlobResponsePayload struct {
-	Hash fs.Hash `json:"hash"`
-	Data []byte  `json:"data"`
-}
