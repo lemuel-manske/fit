@@ -384,7 +384,7 @@ fit serve
 
 Execute `fit serve` em um terminal dentro do diretório do peer. Em outro terminal, no mesmo diretório, execute `add`, `commit`, `sync` e `merge`. O serviço anuncia mudanças de HEAD, recebe anúncios e responde a pedidos de commits e blobs.
 
-Não é necessário executar `serve` para trabalhar localmente. Sem ele, o peer não fica disponível continuamente para outros peers. `repos`, `clone` e `sync` podem abrir uma conexão temporária durante o comando, sem exigir um serviço já iniciado. Cada peer permite apenas um `serve` ativo; CLI e serviço serializam escritas em `.fit` por lock local.
+Não é necessário executar `serve` para trabalhar localmente. Sem ele, o peer não fica disponível continuamente para outros peers. `repos`, `clone` e `sync` podem abrir uma conexão temporária durante o comando, sem exigir um serviço já iniciado. Cada peer permite apenas um `serve` ativo; CLI e serviço serializam escritas em `.fit` por lock local. Se uma operação da CLI está usando o lock, `serve` ignora o anúncio de head recebido para continuar atendendo requests; a próxima descoberta via `sync` recupera esse conhecimento.
 
 Estar ouvindo não significa aplicar mudanças: no developer peer, `serve` apenas registra anúncios e atende pedidos. A atualização dos arquivos continua explícita.
 

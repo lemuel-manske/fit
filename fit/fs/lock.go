@@ -2,10 +2,13 @@ package fs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
 )
+
+var ErrLockBusy = errors.New("repository is locked")
 
 // Lock holds an operating-system lock until Close or process termination.
 // The file remains on disk: removing it could allow two owners of different inodes.
@@ -20,6 +23,9 @@ func Lock(dir, name string, ctx context.Context, wait bool) (*os.File, error) {
 			return file, nil
 		}
 		if !wait || !lockBusy(err) {
+			if lockBusy(err) {
+				err = ErrLockBusy
+			}
 			_ = file.Close()
 			return nil, fmt.Errorf("lock %s: %w", name, err)
 		}
