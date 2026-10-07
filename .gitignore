@@ -3,6 +3,4 @@
 **/lab/**
 **/dist/**
 
-
 .env
-docker/certs/

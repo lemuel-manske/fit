@@ -51,6 +51,7 @@ func Serve(dir string, ctx context.Context) error {
 func serveOnce(dir string, ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
 	config, err := fs.LoadConfig(dir)
 	if err != nil {
 		return err
