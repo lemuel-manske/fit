@@ -354,8 +354,6 @@ Escritas em `.fit` devem usar arquivo temporário e rename atômico sempre que p
 
 `config.json` deve conter um `formatVersion`; mensagens devem conter um `protocolVersion`. A v1 rejeita versões incompatíveis com erro explícito.
 
-Não há lock local na v1. A escrita atômica protege cada arquivo individual, mas não serializa operações concorrentes; a demonstração pressupõe uma única operação de escrita por vez em cada peer.
-
 ## Comandos
 
 ### Criação e descoberta
@@ -378,7 +376,7 @@ fit serve
 
 Execute `fit serve` em um terminal dentro do diretório do peer. Em outro terminal, no mesmo diretório, execute `add`, `commit`, `sync` e `merge`. O serviço anuncia mudanças de HEAD, recebe anúncios e responde a pedidos de commits e blobs.
 
-Não é necessário executar `serve` para trabalhar localmente. Sem ele, o peer não fica disponível continuamente para outros peers. `repos`, `clone` e `sync` podem abrir uma conexão temporária durante o comando, sem exigir um serviço já iniciado. Execute apenas um `serve` por peer e evite comandos de escrita simultâneos no mesmo diretório.
+Não é necessário executar `serve` para trabalhar localmente. Sem ele, o peer não fica disponível continuamente para outros peers. `repos`, `clone` e `sync` podem abrir uma conexão temporária durante o comando, sem exigir um serviço já iniciado.
 
 Estar ouvindo não significa aplicar mudanças: no developer peer, `serve` apenas registra anúncios e atende pedidos. A atualização dos arquivos continua explícita.
 
