@@ -19,38 +19,14 @@ Não é necessário instalar Go.
 Na raiz do projeto:
 
 ```sh
-cp .env.example .env
-# Edite .env com uma senha aleatória antes de iniciar o broker.
+cp .env.example .env # edite .env com uma senha antes de iniciar o broker
+
 docker buildx bake
 docker compose up -d --build --wait rabbitmq
 ```
 
 > Para compilar só uma versão: `docker buildx bake linux-amd64` ou
 `docker buildx bake windows-amd64`.
-
-Execute o binário no diretório dos arquivos que deseja versionar.
-
-No PowerShell, partindo da raiz do projeto:
-
-```powershell
-$env:FIT_BROKER_URL = "amqp://fit:SENHA@localhost:5672/fit"
-$fit = (Resolve-Path .\dist\windows-amd64\fit.exe).Path
-New-Item -ItemType Directory -Force "$HOME\fit-demo" | Out-Null
-Set-Location "$HOME\fit-demo"
-& $fit init
-& $fit serve
-```
-
-No Linux:
-
-```bash
-export FIT_BROKER_URL="amqp://fit:SENHA@localhost:5672/fit"
-fit=$(realpath dist/linux-amd64/fit)
-mkdir -p ~/fit-demo
-cd ~/fit-demo
-$fit init
-$fit serve
-```
 
 ## Objetivo
 

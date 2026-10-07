@@ -103,11 +103,13 @@ func (r *RabbitMQ) Subscribe(
 
 	if err = ensureDeadLetters(ch); err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
 	if err = ch.Qos(16, 0, false); err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
@@ -117,10 +119,13 @@ func (r *RabbitMQ) Subscribe(
 		true,  // autoDelete
 		true,  // exclusive
 		false, // noWait
-		amqp.Table{"x-dead-letter-exchange": "fit.dlx"},
+		amqp.Table{
+			"x-dead-letter-exchange": "fit.dlx",
+		},
 	)
 	if err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
@@ -132,6 +137,7 @@ func (r *RabbitMQ) Subscribe(
 		nil,
 	); err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
@@ -242,6 +248,7 @@ func (r *RabbitMQ) Request(
 	)
 	if err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
@@ -261,11 +268,13 @@ func (r *RabbitMQ) Request(
 	)
 	if err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
 	if err = r.Publish(ctx, exchange, message); err != nil {
 		_ = ch.Close()
+
 		return nil, err
 	}
 
@@ -277,7 +286,9 @@ func (r *RabbitMQ) Request(
 
 		backoff := time.Second
 		timer := time.NewTimer(backoff)
+
 		defer timer.Stop()
+
 		attempts := 1
 
 		for {
@@ -289,10 +300,13 @@ func (r *RabbitMQ) Request(
 				if attempts == 3 {
 					return
 				}
+
 				if err := r.Publish(ctx, exchange, message); err != nil {
 					return
 				}
+
 				attempts++
+
 				backoff *= 2
 				timer.Reset(backoff)
 
@@ -370,15 +384,38 @@ func messageHeaders(message Message) amqp.Table {
 }
 
 func ensureDeadLetters(ch *amqp.Channel) error {
-	if err := ch.ExchangeDeclare("fit.dlx", "fanout", true, false, false, false, nil); err != nil {
+	if err := ch.ExchangeDeclare(
+		"fit.dlx",
+		"fanout",
+		true,  // durable
+		false, // autoDelete
+		false, // internal
+		false, // noWait
+		nil,
+	); err != nil {
 		return err
 	}
-	queue, err := ch.QueueDeclare("fit.dlq", true, false, false, false, amqp.Table{
-		"x-message-ttl": int32(86400000),
-		"x-max-length":  int32(10000),
-	})
+
+	queue, err := ch.QueueDeclare(
+		"fit.dlq",
+		true,  // durable
+		false, // autoDelete
+		false, // exclusive
+		false, // noWait
+		amqp.Table{
+			"x-message-ttl": int32(86400000),
+			"x-max-length":  int32(10000),
+		},
+	)
 	if err != nil {
 		return err
 	}
-	return ch.QueueBind(queue.Name, "", "fit.dlx", false, nil)
+
+	return ch.QueueBind(
+		queue.Name,
+		"",
+		"fit.dlx",
+		false, // noWait
+		nil,
+	)
 }
