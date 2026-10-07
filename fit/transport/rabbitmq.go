@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -270,10 +271,27 @@ func (r *RabbitMQ) Request(
 		defer close(out)
 		defer ch.Close()
 
+		backoff := time.Second
+		timer := time.NewTimer(backoff)
+		defer timer.Stop()
+		attempts := 1
+
+
 		for {
 			select {
 			case <-ctx.Done():
 				return
+
+			case <-timer.C:
+				if attempts == 3 {
+					return
+				}
+				if err := r.Publish(ctx, exchange, message); err != nil {
+					return
+				}
+				attempts++
+				backoff *= 2
+				timer.Reset(backoff)
 
 			case d, ok := <-deliveries:
 				if !ok {
