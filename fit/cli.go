@@ -16,6 +16,34 @@ import (
 )
 
 func InitCLI(root *cobra.Command) {
+	// Serialize local commands with serve's updates without holding the lock
+	// for the lifetime of the service.
+	root.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		switch cmd.Name() {
+		case "add", "rm", "commit", "checkout", "merge", "sync", "status":
+		default:
+			return nil
+		}
+		dir, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		if err = fs.RequireInitialized(dir); err != nil {
+			return err
+		}
+		lock, err := fs.Lock(dir, "write", cmd.Context(), true)
+		if err != nil {
+			return err
+		}
+		run := cmd.RunE
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			defer lock.Close()
+			cmd.RunE = run
+			return run(cmd, args)
+		}
+		return nil
+	}
+
 	root.AddCommand(NewAddCmd())
 	root.AddCommand(NewCheckoutCmd())
 	root.AddCommand(NewCloneCmd())
@@ -418,3 +446,4 @@ func NewCloneCmd() *cobra.Command {
 
 	return cmd
 }
+

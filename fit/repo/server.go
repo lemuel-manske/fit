@@ -19,6 +19,12 @@ func Serve(dir string, ctx context.Context) error {
 		return err
 	}
 
+	lock, err := fs.Lock(dir, "serve", ctx, false)
+	if err != nil {
+		return err
+	}
+	defer lock.Close()
+
 	backoff := time.Second
 
 	for {
@@ -49,6 +55,8 @@ func Serve(dir string, ctx context.Context) error {
 }
 
 func serveOnce(dir string, ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	config, err := fs.LoadConfig(dir)
 	if err != nil {
 		return err
@@ -224,7 +232,7 @@ func handleRepositoryRequest(
 		return handleHeadRequest(dir, t, d, ctx)
 
 	case protocol.HeadAnnounce:
-		return handleHeadAnnounce(dir, envelope)
+		return handleHeadAnnounce(dir, envelope, ctx)
 
 	case protocol.CommitRequest:
 		return handleCommitRequest(dir, t, d, ctx, envelope)
@@ -356,7 +364,14 @@ func handleBlobRequest(
 func handleHeadAnnounce(
 	dir string,
 	envelope protocol.Envelope,
+	ctx context.Context,
 ) error {
+	lock, err := fs.Lock(dir, "write", ctx, true)
+	if err != nil {
+		return err
+	}
+	defer lock.Close()
+
 	config, err := fs.LoadConfig(dir)
 	if err != nil {
 		return err
@@ -432,9 +447,9 @@ func watchHead(
 				continue
 			}
 
-			last = head
-
-			_ = announceHead(dir, ctx, t)
+			if err := announceHead(dir, ctx, t); err == nil {
+				last = head
+			}
 		}
 	}
 }
