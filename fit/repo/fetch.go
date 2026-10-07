@@ -265,7 +265,7 @@ func fetchBlob(
 			continue
 		}
 
-		if _, err := store.Put(response.Body); err != nil {
+		if _, err = store.Put(response.Body); err != nil {
 			return err
 		}
 

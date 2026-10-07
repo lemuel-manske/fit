@@ -345,12 +345,12 @@ func handleBlobRequest(
 			CorrelationID: d.CorrelationID,
 			Headers: map[string]string{
 				"protocolVersion": fmt.Sprint(protocol.GlobalProtocolVersion),
-				"messageId":        uuid.NewString(),
-				"type":             string(protocol.BlobResponse),
-				"repositoryId":     string(config.RepositoryID),
-				"senderPeerId":     string(config.PeerID),
-				"sentAt":           time.Now().UTC().Format(time.RFC3339Nano),
-				"blobHash":         string(payload.Hash),
+				"messageId":       uuid.NewString(),
+				"type":            string(protocol.BlobResponse),
+				"repositoryId":    string(config.RepositoryID),
+				"senderPeerId":    string(config.PeerID),
+				"sentAt":          time.Now().UTC().Format(time.RFC3339Nano),
+				"blobHash":        string(payload.Hash),
 			},
 		},
 	)
@@ -435,7 +435,7 @@ func watchHead(
 				continue
 			}
 
-			if err := announceHead(dir, ctx, t); err == nil {
+			if err = announceHead(dir, ctx, t); err == nil {
 				last = head
 			}
 		}

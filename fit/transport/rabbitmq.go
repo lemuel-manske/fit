@@ -301,7 +301,7 @@ func (r *RabbitMQ) Request(
 					return
 				}
 
-				if err := r.Publish(ctx, exchange, message); err != nil {
+				if err = r.Publish(ctx, exchange, message); err != nil {
 					return
 				}
 
