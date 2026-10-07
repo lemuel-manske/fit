@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -19,12 +18,6 @@ func Serve(dir string, ctx context.Context) error {
 	if err := fs.RequireInitialized(dir); err != nil {
 		return err
 	}
-
-	lock, err := fs.Lock(dir, "serve", ctx, false)
-	if err != nil {
-		return err
-	}
-	defer lock.Close()
 
 	backoff := time.Second
 
@@ -233,7 +226,7 @@ func handleRepositoryRequest(
 		return handleHeadRequest(dir, t, d, ctx)
 
 	case protocol.HeadAnnounce:
-		return handleHeadAnnounce(dir, envelope, ctx)
+		return handleHeadAnnounce(dir, envelope)
 
 	case protocol.CommitRequest:
 		return handleCommitRequest(dir, t, d, ctx, envelope)
@@ -365,19 +358,7 @@ func handleBlobRequest(
 func handleHeadAnnounce(
 	dir string,
 	envelope protocol.Envelope,
-	ctx context.Context,
 ) error {
-	lock, err := fs.Lock(dir, "write", ctx, false)
-	// Announcements are advisory; discovery during sync recovers a skipped head.
-	// Never block request handling behind a CLI operation waiting for replies.
-	if errors.Is(err, fs.ErrLockBusy) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	defer lock.Close()
-
 	config, err := fs.LoadConfig(dir)
 	if err != nil {
 		return err
