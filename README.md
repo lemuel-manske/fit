@@ -19,6 +19,8 @@ Não é necessário instalar Go.
 Na raiz do projeto:
 
 ```sh
+cp .env.example .env
+# Edite .env com uma senha aleatória antes de iniciar o broker.
 docker buildx bake
 docker compose up -d --build --wait rabbitmq
 ```
@@ -31,20 +33,22 @@ Execute o binário no diretório dos arquivos que deseja versionar.
 No PowerShell, partindo da raiz do projeto:
 
 ```powershell
+$env:FIT_BROKER_URL = "amqp://fit:SENHA@localhost:5672/fit"
 $fit = (Resolve-Path .\dist\windows-amd64\fit.exe).Path
 New-Item -ItemType Directory -Force "$HOME\fit-demo" | Out-Null
 Set-Location "$HOME\fit-demo"
-& $fit init demo
+& $fit init
 & $fit serve
 ```
 
 No Linux:
 
 ```bash
+export FIT_BROKER_URL="amqp://fit:SENHA@localhost:5672/fit"
 fit=$(realpath dist/linux-amd64/fit)
 mkdir -p ~/fit-demo
 cd ~/fit-demo
-$fit init demo
+$fit init
 $fit serve
 ```
 
@@ -58,6 +62,24 @@ $fit serve
 - tolerância a falhas de peers e do transporte.
 
 O ambiente da v1 assume uma máquina, uma instância RabbitMQ, vários processos Fit e diretórios independentes.
+
+O foco é demonstrar comunicação assíncrona, descoberta e reconciliação via mensageria, não atingir escala de produção. Exchanges por `repositoryId` segmentam o tráfego; o fan-out ainda entrega cada pedido a todos os peers daquele repositório. Cluster RabbitMQ, alta disponibilidade e particionamento adicional são possibilidades futuras e não foram implementados.
+
+## Segurança do RabbitMQ
+
+O cliente exige `FIT_BROKER_URL`, sem fallback para `guest:guest`. O Compose exige usuário e senha em `.env` (não versionado) e usa o vhost `fit`. Use senha aleatória e codifique caracteres reservados da URL; em produção, crie credenciais individuais por peer.
+
+O script de inicialização remove tags administrativas do usuário e restringe suas permissões a recursos `fit.*`, filas temporárias `amq.gen-*` e publicação na exchange padrão `amq.default` para request/reply. O usuário não recebe acesso a outros vhosts. As portas estão limitadas a localhost; o usuário da aplicação não acessa o painel de administração. As credenciais iniciais só são criadas em um volume novo; volumes existentes precisam de migração explícita com `rabbitmqctl`.
+
+A demonstração básica usa AMQP local. Para criptografar o transporte, coloque `ca.pem`, `server.pem` e `server-key.pem` em `docker/certs/` (não versionado), com chave legível pelo usuário `rabbitmq` do container. O certificado do servidor precisa de SAN `DNS:localhost` e assinatura pela CA; não desative a validação de certificados.
+
+```sh
+docker compose -f compose.yaml -f compose.tls.yaml up -d --build --wait
+export FIT_BROKER_URL="amqps://fit:SENHA@localhost:5671/fit"
+export FIT_BROKER_CA_FILE="/caminho/absoluto/ca.pem"
+```
+
+A configuração TLS desativa o listener AMQP sem criptografia e permite TLS 1.2/1.3. O cliente valida a CA e o hostname; a autenticação do peer continua por usuário/senha, sem exigir certificado de cliente. Isso protege o trecho peer–broker; criptografia ponta a ponta entre peers continua fora do escopo.
 
 ## Conceitos
 
@@ -82,7 +104,7 @@ Ou seja, o estado autoritativo vive nos peers. RabbitMQ transporta anúncios, pe
 
 ### Repositório
 
-`fit init <nome>` cria o primeiro peer e um novo repositório:
+`fit init` cria o primeiro peer e um novo repositório:
 
 - `repositoryId`: UUID, identidade real do repositório;
 - `repositoryName`: nome humano, não necessariamente único;
@@ -90,16 +112,9 @@ Ou seja, o estado autoritativo vive nos peers. RabbitMQ transporta anúncios, pe
 
 Todos os peers são equivalentes. Não existe servidor central, peer líder ou peer proprietário.
 
-### Tipos de peer
+### Tipo de peer
 
-| Tipo | Recebe anúncios enquanto conectado | Download | Atualiza HEAD/working tree |
-| --- | --- | --- | --- |
-| Developer | Sempre | Explícito | Apenas por ação do usuário |
-| Replica (dumb peer) | Sempre | Automático | Fast-forward automático |
-
-O replica peer nunca cria merge commit. Em caso de divergência, conserva todos os commits e heads conhecidos e marca o repositório como divergente.
-
-A replica serve para demonstrar peers `listen-only`, por assim dizer.
+A v1 implementa apenas o developer peer: recebe anúncios enquanto conectado, baixa conteúdo com `sync` e atualiza HEAD/working tree por ação explícita do usuário.
 
 ## Arquitetura
 
@@ -108,12 +123,10 @@ flowchart TB
     CLI["CLI: add, commit, sync, merge"]
     Repo["Repository: index, commits, HEAD"]
     Sync["Sync Service: discovery e reconciliação"]
-    Policy["Peer Policy: developer ou replica"]
     MQ["RabbitMQ Transport"]
 
     CLI --> Repo
     Repo <--> Sync
-    Sync <--> Policy
     Sync <--> MQ
 ```
 
@@ -174,6 +187,12 @@ A topologia utiliza:
 * uma fila efêmera por processo Fit conectado;
 * filas temporárias de resposta (`reply-to`) para operações como `clone` e `sync`.
 
+### Dead letter queue e retry
+
+As filas de assinatura usam `x-dead-letter-exchange=fit.dlx`; essa exchange `fanout` durável encaminha rejeições (`Nack(false)`) para a fila compartilhada `fit.dlq`, também durável. Mensagens inválidas ou falhas de processamento ficam disponíveis para inspeção manual, sem requeue infinito. A DLQ retém mensagens por até 24 horas e no máximo 10.000 entradas; não há replay automático. A durabilidade da fila não garante persistência de mensagens transitórias após reinício do broker.
+
+O consumidor usa ACK manual e prefetch 16. O retry ocorre no solicitante, com até três publicações e backoff de 1 s/2 s, respeitando o contexto; não é um ciclo de redelivery da DLQ. As respostas e anúncios permanecem efêmeros, recuperáveis por novos pedidos.
+
 ### Visão geral
 
 ```mermaid
@@ -220,10 +239,10 @@ flowchart LR
     A["Peer A"] -->|"head.announce(C5)"| X{{"fit.repo.<repositoryId>"}}
 
     X --> QB[("fila Peer B")]
-    X --> QR[("fila Replica")]
+    X --> QR[("fila Peer C")]
 
     QB --> B["Peer B"]
-    QR --> R["Replica"]
+    QR --> R["Peer C"]
 ```
 
 Esse mesmo mecanismo é usado para mensagens como `head.request`, `commit.request` e `blob.request`.
@@ -282,8 +301,7 @@ Arquivos inalterados reutilizam o mesmo blob entre commits. Alterar um arquivo e
   "repositoryId": "uuid",
   "parents": ["sha256:..."],
   "author": {
-    "peerId": "uuid",
-    "name": "Ana"
+    "peerId": "uuid"
   },
   "timestamp": "2026-09-17T12:00:00Z",
   "message": "adiciona configuração",
@@ -328,7 +346,7 @@ Para merge, um blob é considerado texto quando contém UTF-8 válido; caso cont
 └── MERGE_BASE
 ```
 
-- `config.json`: IDs, nome, tipo do peer e configuração do broker.
+- `config.json`: `formatVersion`, `repositoryId`, `peerId` e `repositoryName`. O broker é configurado por variáveis de ambiente, fora do estado versionado do peer.
 - `HEAD`: commit aplicado localmente.
 - `index.json`: paths preparados com hashes de blobs e deleções registradas por `fit add` e `fit rm`.
 - `commits/`: commits validados e imutáveis.
@@ -349,13 +367,13 @@ O lock local deve serializar escritas concorrentes entre CLI e `serve` e ser lib
 ### Criação e descoberta
 
 ```bash
-fit init <nome>
+fit init
 fit repos
 fit clone <repository-id|nome> <diretório>
 fit serve
 ```
 
-- `init`: cria `.fit`, gera os IDs e anuncia o repositório quando o transporte estiver disponível.
+- `init`: cria `.fit` e gera os IDs; o nome é inferido do diretório atual. A publicação na rede ocorre quando `serve` é iniciado.
 - `repos`: faz descoberta ativa e lista ofertas de peers vivos.
 - `clone`: descobre o repositório, escolhe uma oferta válida, baixa os commits alcançáveis pelo head oferecido e todos os blobs referenciados por eles, e materializa esse head. Blobs repetidos são baixados uma única vez.
 - `serve`: mantém este peer conectado e processando mensagens, em primeiro plano, até `Ctrl+C`.
@@ -364,7 +382,7 @@ fit serve
 
 `init` cria o peer no disco; `serve` o coloca online. São operações distintas: `.fit` continua existindo quando o processo termina.
 
-Execute `fit serve` em um terminal dentro do diretório do peer. Em outro terminal, no mesmo diretório, execute `add`, `commit`, `sync` e `merge`. O serviço anuncia mudanças de HEAD, recebe anúncios e responde a pedidos de commits e blobs. No replica peer, também baixa e aplica atualizações por fast-forward.
+Execute `fit serve` em um terminal dentro do diretório do peer. Em outro terminal, no mesmo diretório, execute `add`, `commit`, `sync` e `merge`. O serviço anuncia mudanças de HEAD, recebe anúncios e responde a pedidos de commits e blobs.
 
 Não é necessário executar `serve` para trabalhar localmente. Sem ele, o peer não fica disponível continuamente para outros peers. `repos`, `clone` e `sync` podem abrir uma conexão temporária durante o comando, sem exigir um serviço já iniciado. Cada peer permite apenas um `serve` ativo; CLI e serviço serializam escritas em `.fit` por lock local.
 
@@ -379,13 +397,12 @@ fit add <path...>
 fit rm <path...>
 fit commit -m <mensagem>
 fit status
-fit log
 fit checkout <commit-id>
 ```
 
 - `add`: grava o conteúdo atual como blob, se ainda não existir, e registra seu hash no index. Edições posteriores não alteram o conteúdo preparado.
 - `rm`: remove o arquivo do working tree e registra sua ausência no index.
-- `commit`: cria o manifesto completo combinando o manifesto de `HEAD` e as alterações do index. Verifica a presença dos blobs referenciados, persiste o commit, move `HEAD` e anuncia o novo head quando possível.
+- `commit`: cria o manifesto completo combinando o manifesto de `HEAD` e as alterações do index. Verifica a presença dos blobs referenciados, persiste o commit, move `HEAD`. Quando `serve` está executando, ele detecta a mudança e anuncia o novo head; `commit` não publica diretamente.
 - `checkout`: substitui o working tree pelo snapshot escolhido; exige working tree limpo.
 
 Com merge conflitante em andamento, `commit` só é permitido depois que todos os conflitos forem resolvidos e adicionados ao index. O commit resultante terá dois pais.
@@ -398,7 +415,7 @@ fit merge <commit-id>
 fit merge --abort
 ```
 
-- `sync`: anuncia o head local, consulta os heads dos peers disponíveis e baixa conteúdo faltante. Mostra os IDs disponíveis para integração. Não altera `HEAD`, index nem working tree do developer peer.
+- `sync`: consulta os heads dos peers disponíveis e baixa conteúdo faltante. Mostra os IDs disponíveis para integração. Não altera `HEAD`, index nem working tree do developer peer.
 - `merge <commit-id>`: integra um commit já baixado. Faz fast-forward quando possível; caso contrário, executa 3-way merge e cria um merge commit ou registra conflitos. Exige index e working tree limpos e nenhum merge em andamento. Não acessa a rede.
 - `merge --abort`: cancela um merge em andamento e restaura `HEAD`, index e working tree ao estado anterior ao merge.
 
@@ -412,7 +429,7 @@ Para cada head coletado, `sync` percorre todos os pais até a raiz e solicita os
 
 Um head só é marcado como completo quando todos os commits alcançáveis e seus blobs estiverem validados e persistidos. Timeout deixa o head pendente em `SYNC_HEADS.json`; nova execução retoma o que falta. Heads anunciados depois da coleta ficam para a próxima sincronização.
 
-`merge`, `checkout` e o fast-forward da réplica verificam as dependências antes de alterar arquivos ou `HEAD`. Se houver conteúdo faltante, interrompem sem aplicar parcialmente e indicam a necessidade de sincronização.
+`merge` e `checkout` verificam as dependências antes de alterar arquivos ou `HEAD`. Se houver conteúdo faltante, interrompem sem aplicar parcialmente e indicam a necessidade de sincronização.
 
 ## Descoberta e clone
 
@@ -445,7 +462,7 @@ sequenceDiagram
     B->>B: valida, persiste e checkout
 ```
 
-`repository.announce` informa que um peer vivo possui o repositório, mas não é um registro permanente. Descoberta e recuperação devem ser ativas.
+A descoberta é ativa: `repository.discover` recebe `repository.offer` dos peers conectados. Não há registro permanente de presença.
 
 ## Protocolo de mensagens
 
@@ -468,10 +485,8 @@ Mensagens mínimas:
 
 | Mensagem | Finalidade |
 | --- | --- |
-| `repository.announce` | Informar que um peer vivo possui um repositório |
 | `repository.discover` | Procurar repositório por nome ou ID |
 | `repository.offer` | Oferecer repo, peer e head para clone |
-| `peer.announce` | Informar presença e política do peer |
 | `head.announce` | Informar o head atual do peer |
 | `head.request` | Solicitar que peers vivos anunciem seus heads atuais |
 | `commit.request` | Solicitar um commit pelo ID |
@@ -479,7 +494,7 @@ Mensagens mínimas:
 | `blob.request` | Solicitar um blob pelo hash |
 | `blob.response` | Entregar os bytes de um blob |
 
-`blob.response` usa corpo binário (`application/octet-stream`), sem base64. Os campos de identificação do envelope e `blobHash` seguem nas headers AMQP; `correlationId` associa a resposta ao pedido. Cada resposta carrega um blob inteiro. Fragmentação e streaming ficam fora da v1; o transporte deve rejeitar objetos acima do limite de mensagem configurado, com erro explícito.
+`blob.response` usa corpo binário (`application/octet-stream`), sem base64. Os campos de identificação do envelope e `blobHash` seguem nas headers AMQP; `correlationId` associa a resposta ao pedido. Cada resposta carrega um blob inteiro. Fragmentação e streaming ficam fora da v1; o limite de mensagem é o configurado no broker.
 
 Regras do protocolo:
 
@@ -488,7 +503,7 @@ Regras do protocolo:
 - a primeira resposta válida é aceita; as demais são ignoradas;
 - ao receber um commit cujo pai esteja ausente, o peer solicita o pai;
 - manifestos determinam os blobs necessários; blobs locais válidos não são solicitados novamente;
-- requests têm timeout e retry limitado com backoff;
+- requests são publicados no máximo três vezes: imediatamente, após 1 s e após mais 2 s; a última janela de resposta dura 4 s. O contexto do comando pode encerrar a coleta antes disso; o mesmo `reply-to` e `correlationId` são reutilizados. As operações atendidas são consultas idempotentes;
 - requests que esperam resposta informam uma fila de retorno (`reply-to`);
 - retries são por objeto solicitado; objetos já validados não são baixados novamente;
 - o destinatário valida `protocolVersion`, `repositoryId`, hash, estrutura e paths;
@@ -583,28 +598,19 @@ Ao receber `head.announce`:
 3. não altera `HEAD` nem working tree;
 4. aguarda `sync` para baixar e `merge` para aplicar.
 
-### Replica peer
-
-Ao receber ou redescobrir um head:
-
-1. baixa automaticamente commits faltantes;
-2. faz fast-forward quando possível;
-3. em divergência, conserva os heads e marca `DIVERGED`;
-4. nunca resolve conflito nem cria merge commit.
-
 ## Falhas e recuperação
 
 ### RabbitMQ indisponível
 
-- `add`, `rm`, `commit`, `status`, `log` e operações locais continuam funcionando.
+- `add`, `rm`, `commit`, `status` e operações locais continuam funcionando.
 - Discovery, anúncios e transferências ficam indisponíveis.
 - Commits criados offline permanecem no `.fit`.
-- Ao reconectar, o peer anuncia presença, repositório e `HEAD` atual.
+- Ao reconectar, o peer anuncia `HEAD` atual e responde à descoberta.
 - Não é necessário reproduzir anúncios perdidos.
 
 ### Reinício do RabbitMQ
 
-- peers recriam exchanges/filas temporárias e anunciam novamente presença, repositório e `HEAD`;
+- peers recriam exchanges/filas temporárias e anunciam novamente `HEAD` e respondem à descoberta;
 - a recuperação não depende das mensagens existentes antes da queda.
 
 ### Peer indisponível
@@ -656,26 +662,21 @@ sequenceDiagram
     participant A as Developer A
     participant MQ as RabbitMQ
     participant B as Developer B
-    participant R as Replica
 
     A->>A: commit C2A offline
     B->>B: commit C2B offline
     A->>MQ: head.announce(C2A)
     B->>MQ: head.announce(C2B)
-    MQ->>R: heads C2A e C2B
-    R->>R: Baixar commits e blobs e marcar DIVERGED
     B->>B: Executar sync e merge C2A
     B->>B: Resolver conflito e criar commit M
     B->>MQ: head.announce(M)
     MQ->>A: head M disponível
-    MQ->>R: head M disponível
     A->>A: Executar sync e merge M por fast-forward
-    R->>R: Baixar e aplicar M por fast-forward
 ```
 
 Roteiro mínimo:
 
-1. Criar repo com `fit init projeto-x`.
+1. Criar repo com `fit init`.
 2. Executar `fit serve` em A, descobrir com `fit repos` e criar outros peers com `fit clone`. Iniciar `fit serve` em cada peer, em terminais separados.
 3. Demonstrar propagação e fast-forward.
 4. Parar processos ou RabbitMQ.
@@ -684,9 +685,16 @@ Roteiro mínimo:
 7. Exibir `DIVERGED`, executar merge e resolver conflito.
 8. Anunciar o merge commit e mostrar fast-forward nos outros peers.
 
+## Funcionalidades não implementadas
+
+- **Replica peer:** foi descartado da entrega por falta de tempo. Download e fast-forward automáticos não foram implementados; todos os peers seguem a política developer.
+- **`repository.announce` e `peer.announce`:** durante a implementação, o uso dessas mensagens deixou de fazer sentido. A descoberta ativa com `repository.discover`/`repository.offer` e os anúncios de `head.announce` atendem ao fluxo utilizado.
+- **`fit log`:** ficou de fora por falta de tempo; não é um comando disponível na CLI.
+- **Broker em `config.json`:** não foi incluído porque não fez sentido persistir configuração de ambiente junto à identidade do peer. A conexão usa `FIT_BROKER_URL` e, opcionalmente, `FIT_BROKER_CA_FILE`.
+
 ## Fora do escopo da v1
 
-- autenticação, autorização e peers não confiáveis;
+- validação da identidade de peers não confiáveis além das credenciais do broker;
 - criptografia ponta a ponta;
 - branches, tags e rebase;
 - garbage collection e compactação;
@@ -708,7 +716,6 @@ A v1 está completa quando:
 - clone e sync verificam commits, ancestrais e blobs antes de declarar um head completo;
 - blobs corrompidos ou ausentes impedem aplicação sem alterar parcialmente o working tree;
 - developer peers separam anúncio, download via `sync` e aplicação via `merge`;
-- replica peers fazem download automático e apenas fast-forward automático;
 - commits duplicados e fora de ordem não corrompem estado;
 - divergência é detectada pelo DAG;
 - merge textual cria commit com dois pais;
@@ -721,3 +728,4 @@ A v1 está completa quando:
 ## Glossário
 
 - DAG: Directed Acyclic Graph, grafo acíclico direcionado. No Fit, o histórico de commits forma um DAG, onde cada commit aponta para seus pais, e não há ciclos.
+
