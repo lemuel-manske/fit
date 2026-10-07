@@ -146,6 +146,9 @@ func requestCommit(
 	repositoryID fs.RepositoryID,
 	id fs.CommitID,
 ) (fs.Commit, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	envelope, err := protocol.NewEnvelope(
 		protocol.CommitRequest,
 		repositoryID,
@@ -208,6 +211,9 @@ func fetchBlob(
 	repositoryID fs.RepositoryID,
 	hash fs.Hash,
 ) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	store := fs.NewBlobStore(dir)
 
 	if _, err := store.Get(hash); err == nil {
@@ -246,36 +252,21 @@ func fetchBlob(
 	}
 
 	for response := range responses {
-		envelope, err := protocol.Decode(response.Body)
-		if err != nil {
+		if response.ContentType != "application/octet-stream" ||
+			response.Headers["protocolVersion"] != fmt.Sprint(protocol.GlobalProtocolVersion) ||
+			response.Headers["type"] != string(protocol.BlobResponse) ||
+			response.Headers["repositoryId"] != string(repositoryID) ||
+			response.Headers["messageId"] == "" ||
+			response.Headers["blobHash"] != string(hash) {
 			continue
 		}
 
-		if envelope.Type != protocol.BlobResponse {
+		if fs.NewBlobID(response.Body) != hash {
 			continue
 		}
 
-		payload, err :=
-			protocol.Payload[protocol.BlobResponsePayload](envelope)
-		if err != nil {
-			continue
-		}
-
-		if payload.Hash != hash {
-			continue
-		}
-
-		storedHash, err := store.Put(payload.Data)
-		if err != nil {
+		if _, err := store.Put(response.Body); err != nil {
 			return err
-		}
-
-		if storedHash != hash {
-			return fmt.Errorf(
-				"invalid blob: expected %s, got %s",
-				hash,
-				storedHash,
-			)
 		}
 
 		return nil
@@ -283,3 +274,4 @@ func fetchBlob(
 
 	return fmt.Errorf("blob not found: %s", hash)
 }
+

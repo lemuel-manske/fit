@@ -10,6 +10,8 @@ import (
 	"fit/fit/fs"
 	"fit/fit/protocol"
 	"fit/fit/transport"
+
+	"github.com/google/uuid"
 )
 
 func Serve(dir string, ctx context.Context) error {
@@ -331,20 +333,24 @@ func handleBlobRequest(
 		return err
 	}
 
-	envelope, err := protocol.NewEnvelope(
-		protocol.BlobResponse,
-		config.RepositoryID,
-		config.PeerID,
-		protocol.BlobResponsePayload{
-			Hash: payload.Hash,
-			Data: data,
+	return t.Reply(
+		ctx,
+		d.ReplyTo,
+		transport.Message{
+			Body: data,
+			ContentType: "application/octet-stream",
+			CorrelationID: d.CorrelationID,
+			Headers: map[string]string{
+				"protocolVersion": fmt.Sprint(protocol.GlobalProtocolVersion),
+				"messageId": uuid.NewString(),
+				"type": string(protocol.BlobResponse),
+				"repositoryId": string(config.RepositoryID),
+				"senderPeerId": string(config.PeerID),
+				"sentAt": time.Now().UTC().Format(time.RFC3339Nano),
+				"blobHash": string(payload.Hash),
+			},
 		},
 	)
-	if err != nil {
-		return err
-	}
-
-	return reply(ctx, t, d, envelope)
 }
 
 func handleHeadAnnounce(
@@ -474,3 +480,4 @@ func announceHead(
 		},
 	)
 }
+

@@ -194,6 +194,7 @@ func (r *RabbitMQ) Reply(
 		false, // immediate
 		false, // mandatory
 		amqp.Publishing{
+			Headers: messageHeaders(message),
 			ContentType:   message.ContentType,
 			Body:          message.Body,
 			CorrelationId: message.CorrelationID,
@@ -268,11 +269,20 @@ func (r *RabbitMQ) Request(
 					continue
 				}
 
-				out <- Message{
+				response := Message{
 					Body:          d.Body,
 					ContentType:   d.ContentType,
 					ReplyTo:       d.ReplyTo,
 					CorrelationID: d.CorrelationId,
+				}
+				response.Headers = map[string]string{}
+				for key, value := range d.Headers {
+					response.Headers[key] = fmt.Sprint(value)
+				}
+				select {
+				case out <- response:
+				case <-ctx.Done():
+					return
 				}
 			}
 		}
@@ -314,3 +324,13 @@ func (s *RabbitMQSubscription) Messages() <-chan Delivery {
 func (s *RabbitMQSubscription) Close() error {
 	return s.ch.Close()
 }
+
+
+func messageHeaders(message Message) amqp.Table {
+	headers := amqp.Table{}
+	for key, value := range message.Headers {
+		headers[key] = value
+	}
+	return headers
+}
+
