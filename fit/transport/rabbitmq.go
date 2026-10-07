@@ -2,6 +2,8 @@ package transport
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"os"
 	"time"
@@ -16,7 +18,7 @@ type RabbitMQ struct {
 }
 
 func loadURL() string {
-	url := "amqp://guest:guest@localhost:5672/"
+	url := ""
 
 	if envURL := os.Getenv("FIT_BROKER_URL"); envURL != "" {
 		url = envURL
@@ -28,7 +30,27 @@ func loadURL() string {
 func NewRabbitMQ() (Transport, error) {
 	url := loadURL()
 
-	conn, err := amqp.Dial(url)
+	if url == "" {
+		return nil, fmt.Errorf("FIT_BROKER_URL is required")
+	}
+
+	var tlsConfig *tls.Config
+	if caFile := os.Getenv("FIT_BROKER_CA_FILE"); caFile != "" {
+		data, err := os.ReadFile(caFile)
+		if err != nil {
+			return nil, err
+		}
+		roots, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, err
+		}
+		if !roots.AppendCertsFromPEM(data) {
+			return nil, fmt.Errorf("invalid broker CA certificate")
+		}
+		tlsConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
+	}
+
+	conn, err := amqp.DialConfig(url, amqp.Config{TLSClientConfig: tlsConfig})
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +388,6 @@ func messageHeaders(message Message) amqp.Table {
 	}
 	return headers
 }
-
 
 func ensureDeadLetters(ch *amqp.Channel) error {
 	if err := ch.ExchangeDeclare("fit.dlx", "fanout", true, false, false, false, nil); err != nil {
