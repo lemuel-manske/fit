@@ -232,7 +232,7 @@ func (r *RabbitMQ) Reply(
 		false, // immediate
 		false, // mandatory
 		amqp.Publishing{
-			Headers: messageHeaders(message),
+			Headers:       messageHeaders(message),
 			ContentType:   message.ContentType,
 			Body:          message.Body,
 			CorrelationId: message.CorrelationID,
@@ -297,7 +297,6 @@ func (r *RabbitMQ) Request(
 		timer := time.NewTimer(backoff)
 		defer timer.Stop()
 		attempts := 1
-
 
 		for {
 			select {
@@ -380,7 +379,6 @@ func (s *RabbitMQSubscription) Close() error {
 	return s.ch.Close()
 }
 
-
 func messageHeaders(message Message) amqp.Table {
 	headers := amqp.Table{}
 	for key, value := range message.Headers {
@@ -395,7 +393,7 @@ func ensureDeadLetters(ch *amqp.Channel) error {
 	}
 	queue, err := ch.QueueDeclare("fit.dlq", true, false, false, false, amqp.Table{
 		"x-message-ttl": int32(86400000),
-		"x-max-length": int32(10000),
+		"x-max-length":  int32(10000),
 	})
 	if err != nil {
 		return err

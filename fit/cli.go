@@ -446,4 +446,3 @@ func NewCloneCmd() *cobra.Command {
 
 	return cmd
 }
-

@@ -52,10 +52,10 @@ func TestRabbitMQRetryBinaryReplyAndDeadLetters(t *testing.T) {
 	require.Equal(t, first.ReplyTo, retry.ReplyTo)
 	data := []byte{0, 255, 128, 10}
 	require.NoError(t, server.Reply(ctx, retry.ReplyTo, Message{
-		Body: data,
-		ContentType: "application/octet-stream",
+		Body:          data,
+		ContentType:   "application/octet-stream",
 		CorrelationID: retry.CorrelationID,
-		Headers: map[string]string{"blobHash": "hash"},
+		Headers:       map[string]string{"blobHash":         "hash"},
 	}))
 	require.NoError(t, retry.Ack())
 	select {
