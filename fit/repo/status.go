@@ -249,9 +249,11 @@ func GetStatus(dir string) (*Status, error) {
 		if a.PeerID < b.PeerID {
 			return -1
 		}
+
 		if a.PeerID > b.PeerID {
 			return 1
 		}
+
 		return 0
 	})
 

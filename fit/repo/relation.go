@@ -30,10 +30,13 @@ func commitRelation(
 		return RelationAhead, nil
 	}
 
-	if _, err := fs.NewCommitStore(dir).Get(remote); err != nil {
+	store := fs.NewCommitStore(dir)
+
+	if _, err := store.Get(remote); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return RelationUnknown, nil
 		}
+
 		return "", err
 	}
 
@@ -46,6 +49,7 @@ func commitRelation(
 		if errors.Is(err, os.ErrNotExist) {
 			return RelationUnknown, nil
 		}
+
 		return "", err
 	}
 
@@ -58,6 +62,7 @@ func commitRelation(
 		if errors.Is(err, os.ErrNotExist) {
 			return RelationUnknown, nil
 		}
+
 		return "", err
 	}
 
