@@ -67,19 +67,13 @@ O foco é demonstrar comunicação assíncrona, descoberta e reconciliação via
 
 ## Segurança do RabbitMQ
 
-O cliente exige `FIT_BROKER_URL`, sem fallback para `guest:guest`. O Compose exige usuário e senha em `.env` (não versionado) e usa o vhost `fit`. Use senha aleatória e codifique caracteres reservados da URL; em produção, crie credenciais individuais por peer.
-
-O script de inicialização remove tags administrativas do usuário e restringe suas permissões a recursos `fit.*`, filas temporárias `amq.gen-*` e publicação na exchange padrão `amq.default` para request/reply. O usuário não recebe acesso a outros vhosts. As portas estão limitadas a localhost; o usuário da aplicação não acessa o painel de administração. As credenciais iniciais só são criadas em um volume novo; volumes existentes precisam de migração explícita com `rabbitmqctl`.
-
-A demonstração básica usa AMQP local. Para criptografar o transporte, coloque `ca.pem`, `server.pem` e `server-key.pem` em `docker/certs/` (não versionado), com chave legível pelo usuário `rabbitmq` do container. O certificado do servidor precisa de SAN `DNS:localhost` e assinatura pela CA; não desative a validação de certificados.
+A demonstração usa autenticação por usuário e senha, definidos em `.env` a partir de `.env.example`, e um vhost dedicado chamado `fit`. O cliente exige `FIT_BROKER_URL`, sem fallback para `guest:guest`; `.env` não é versionado e as portas do broker ficam limitadas a localhost.
 
 ```sh
-docker compose -f compose.yaml -f compose.tls.yaml up -d --build --wait
-export FIT_BROKER_URL="amqps://fit:SENHA@localhost:5671/fit"
-export FIT_BROKER_CA_FILE="/caminho/absoluto/ca.pem"
+export FIT_BROKER_URL="amqp://fit:SENHA@localhost:5672/fit"
 ```
 
-A configuração TLS desativa o listener AMQP sem criptografia e permite TLS 1.2/1.3. O cliente valida a CA e o hostname; a autenticação do peer continua por usuário/senha, sem exigir certificado de cliente. Isso protege o trecho peer–broker; criptografia ponta a ponta entre peers continua fora do escopo.
+Use uma senha própria e codifique caracteres reservados na URL. As credenciais iniciais do Compose só são criadas em um volume novo; volumes existentes exigem ajuste manual. A demonstração não configura TLS nem permissões individuais por peer. Para produção, recomenda-se `amqps`, credenciais individuais e permissões mínimas; criptografia ponta a ponta continua fora do escopo.
 
 ## Conceitos
 
@@ -690,7 +684,7 @@ Roteiro mínimo:
 - **Replica peer:** foi descartado da entrega por falta de tempo. Download e fast-forward automáticos não foram implementados; todos os peers seguem a política developer.
 - **`repository.announce` e `peer.announce`:** durante a implementação, o uso dessas mensagens deixou de fazer sentido. A descoberta ativa com `repository.discover`/`repository.offer` e os anúncios de `head.announce` atendem ao fluxo utilizado.
 - **`fit log`:** ficou de fora por falta de tempo; não é um comando disponível na CLI.
-- **Broker em `config.json`:** não foi incluído porque não fez sentido persistir configuração de ambiente junto à identidade do peer. A conexão usa `FIT_BROKER_URL` e, opcionalmente, `FIT_BROKER_CA_FILE`.
+- **Broker em `config.json`:** não foi incluído porque não fez sentido persistir configuração de ambiente junto à identidade do peer. A conexão usa `FIT_BROKER_URL`.
 
 ## Fora do escopo da v1
 

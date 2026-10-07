@@ -2,8 +2,6 @@ package transport
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"os"
 	"time"
@@ -34,23 +32,7 @@ func NewRabbitMQ() (Transport, error) {
 		return nil, fmt.Errorf("FIT_BROKER_URL is required")
 	}
 
-	var tlsConfig *tls.Config
-	if caFile := os.Getenv("FIT_BROKER_CA_FILE"); caFile != "" {
-		data, err := os.ReadFile(caFile)
-		if err != nil {
-			return nil, err
-		}
-		roots, err := x509.SystemCertPool()
-		if err != nil {
-			return nil, err
-		}
-		if !roots.AppendCertsFromPEM(data) {
-			return nil, fmt.Errorf("invalid broker CA certificate")
-		}
-		tlsConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
-	}
-
-	conn, err := amqp.DialConfig(url, amqp.Config{TLSClientConfig: tlsConfig})
+	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
 	}
